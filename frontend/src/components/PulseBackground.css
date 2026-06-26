@@ -1,0 +1,102 @@
+.pulse-bg-container {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--bg-page);
+}
+
+/* Secondary layer: Blobs */
+.pulse-blobs {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+}
+
+.pulse-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(150px);
+  opacity: 0.20;
+  mix-blend-mode: screen;
+}
+[data-theme='light'] .pulse-blob {
+  opacity: 0.15;
+  mix-blend-mode: normal;
+}
+
+.pb-1 {
+  width: 800px; height: 800px;
+  background: #1e1b4b; /* Deep Indigo */
+  top: -100px; left: -200px;
+  animation: drift-pb1 50s ease-in-out infinite alternate;
+}
+.pb-2 {
+  width: 700px; height: 700px;
+  background: #172554; /* Deep Blue */
+  bottom: -200px; right: -100px;
+  animation: drift-pb2 60s ease-in-out infinite alternate-reverse;
+}
+.pb-3 {
+  width: 900px; height: 900px;
+  background: #312e81; /* Indigo */
+  top: 30%; left: 40%;
+  animation: drift-pb3 70s ease-in-out infinite alternate;
+}
+[data-theme='light'] .pb-1 {
+  background: radial-gradient(circle, #1EA7FF, transparent 60%);
+}
+[data-theme='light'] .pb-2 {
+  background: radial-gradient(circle, #3B82F6, transparent 60%);
+}
+[data-theme='light'] .pb-3 {
+  background: radial-gradient(circle, #2563EB, transparent 60%);
+}
+
+@keyframes drift-pb1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(15%, 10%) scale(1.1); }
+}
+@keyframes drift-pb2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-20%, -15%) scale(0.9); }
+}
+@keyframes drift-pb3 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-10%, 20%) scale(1.2); }
+}
+
+/* Primary layer: Waveform SVG */
+.pulse-waveform-wrapper {
+  position: absolute;
+  top: 30%; /* Roughly behind the hero */
+  left: 0; right: 0;
+  height: 200px; /* match SVG viewBox height */
+  width: 100vw;
+  opacity: 0.8;
+}
+
+.pulse-waveform-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.pulse-path-traveler {
+  stroke-dasharray: 200 3000;
+  stroke-dashoffset: 200;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 15px rgba(96, 165, 250, 0.8));
+  animation: travel-pulse 5s linear infinite;
+}
+
+@keyframes travel-pulse {
+  0% { stroke-dashoffset: 200; }
+  100% { stroke-dashoffset: -2150; }
+}
+
+/* Respect user preferences */
+@media (prefers-reduced-motion: reduce) {
+  .pulse-blob, .pulse-path-traveler {
+    animation: none !important;
+  }
+}

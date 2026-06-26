@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "WorkPulse Tracker",
+  "version": "1.0.0",
+  "description": "Browser extension for tracking website activity and productivity for WorkPulse.",
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "storage",
+    "alarms"
+  ],
+  "host_permissions": [
+    "http://localhost:5000/*",
+    "https://api.workpulse.dev/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "WorkPulse"
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

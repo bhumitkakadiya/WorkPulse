@@ -1,0 +1,756 @@
+/* --- IMMERSIVE AUTH ENVIRONMENT --- */
+.login-page {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background-color: #030712;
+  color: #FFFFFF;
+  font-family: 'Inter', system-ui, sans-serif;
+  display: flex;
+}
+
+.auth-immersive-container {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 1. Large Gradient Mesh */
+.auth-gradient-mesh {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, #030712, #071124, #0B1730, #102248);
+  background-size: 400% 400%;
+  animation: gradientMeshShift 25s ease infinite;
+  z-index: 1;
+}
+
+@keyframes gradientMeshShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* 2. Floating Blobs */
+.auth-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.4;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.auth-blob-1 {
+  width: 800px; height: 800px;
+  background: radial-gradient(circle, #1EA7FF, transparent 60%);
+  top: -20%; left: -10%;
+  animation: floatBlob1 25s ease-in-out infinite alternate;
+}
+
+.auth-blob-2 {
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, #3B82F6, transparent 60%);
+  bottom: -20%; right: -10%;
+  animation: floatBlob2 30s ease-in-out infinite alternate-reverse;
+}
+
+.auth-blob-3 {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, #2563EB, transparent 60%);
+  top: 30%; left: 40%;
+  animation: floatBlob3 20s ease-in-out infinite alternate;
+}
+
+@keyframes floatBlob1 { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(100px, 50px) scale(1.1); } }
+@keyframes floatBlob2 { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(-80px, -60px) scale(1.15); } }
+@keyframes floatBlob3 { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(60px, -40px) scale(1.05); } }
+
+/* 3. Grid Overlay */
+.auth-grid-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* 4. Light Particles */
+.auth-particles {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 4;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.auth-particle {
+  position: absolute;
+  background: #1EA7FF;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #1EA7FF, 0 0 20px #1EA7FF;
+  animation: particleFloat infinite linear;
+  opacity: 0;
+}
+
+@keyframes particleFloat {
+  0% { transform: translateY(100vh) scale(0); opacity: 0; }
+  20% { opacity: 0.6; }
+  80% { opacity: 0.6; }
+  100% { transform: translateY(-100px) scale(1); opacity: 0; }
+}
+
+/* 5. Floating UI Elements */
+.auth-floating-elements {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.auth-float-card {
+  position: absolute;
+  padding: 16px 20px;
+  border-radius: 16px;
+  color: #fff;
+}
+
+.glass-panel {
+  background: rgba(10, 15, 30, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.blur-heavy {
+  filter: blur(2px);
+  opacity: 0.7;
+  transform: scale(0.9);
+}
+
+/* Positioning */
+.card-tl { top: 15%; left: 10%; }
+.card-tr { top: 20%; right: 12%; }
+.card-bl { bottom: 20%; left: 12%; }
+.card-br { bottom: 15%; right: 10%; }
+
+@media (max-width: 1400px) {
+  .card-tl { left: 5%; }
+  .card-tr { right: 5%; }
+  .card-bl { left: 5%; }
+  .card-br { right: 5%; }
+}
+
+@media (max-width: 1024px) {
+  .auth-floating-elements {
+    display: none; /* Hide on smaller screens to avoid overlapping the form */
+  }
+}
+
+.float-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #B8C4D9;
+}
+
+.icon-wrap {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-wrap.bg-blue { background: rgba(30, 167, 255, 0.15); color: #1EA7FF; }
+.icon-wrap.bg-cyan { background: rgba(6, 182, 212, 0.15); color: #06B6D4; }
+.icon-wrap.bg-indigo { background: rgba(99, 102, 241, 0.15); color: #6366F1; }
+.icon-wrap.bg-purple { background: rgba(168, 85, 247, 0.15); color: #A855F7; }
+
+.float-card-value {
+  font-size: 26px;
+  font-weight: 700;
+}
+.float-card-value span { font-size: 14px; color: #B8C4D9; font-weight: 500; margin-left: 2px;}
+
+.float-card-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #10B981;
+}
+
+.auth-abstract-wave {
+  position: absolute;
+  top: 40%;
+  left: 20%;
+  width: 300px;
+  height: auto;
+  opacity: 0.6;
+}
+
+/* Float Animations */
+.float-anim-1 { animation: floatVertical 6s ease-in-out infinite; }
+.float-anim-2 { animation: floatVertical 7.5s ease-in-out infinite reverse; }
+.float-anim-3 { animation: floatVertical 8s ease-in-out infinite 1s; }
+.float-anim-4 { animation: floatVertical 7s ease-in-out infinite reverse 1.5s; }
+.float-anim-5 { animation: floatVertical 10s ease-in-out infinite alternate; }
+
+@keyframes floatVertical {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+  100% { transform: translateY(0); }
+}
+
+
+/* --- MAIN CONTENT & AUTH CARDS --- */
+.auth-content-layer {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  padding: 40px 20px;
+}
+
+/* Centers content vertically if it is smaller than viewport, while allowing scroll if taller */
+.auth-content-layer::before,
+.auth-content-layer::after {
+  content: '';
+  margin: auto;
+}
+
+.auth-logo-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 520px; /* Login default */
+  background: rgba(10, 15, 30, 0.65);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.15); /* Slight top highlight */
+  border-radius: 24px;
+  padding: 48px;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  animation: subtleFloatCard 10s ease-in-out infinite alternate;
+  max-height: calc(100vh - 150px);
+  overflow-y: auto;
+}
+
+.login-card::-webkit-scrollbar {
+  width: 14px;
+}
+.login-card::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 24px 0;
+}
+.login-card::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  border: 4px solid transparent;
+  background-clip: padding-box;
+}
+.login-card::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0;
+  height: 0;
+}
+
+.login-card.signup-mode {
+  max-width: 700px; /* Signup specific */
+}
+
+@media (max-width: 768px) {
+  .login-card {
+    padding: 32px 24px;
+    max-width: 95vw;
+  }
+}
+
+@keyframes subtleFloatCard {
+  0% { transform: translateY(0); box-shadow: 0 25px 80px rgba(0, 0, 0, 0.45); }
+  100% { transform: translateY(-8px); box-shadow: 0 35px 90px rgba(0, 0, 0, 0.55), 0 0 40px rgba(30, 167, 255, 0.05); }
+}
+
+.login-card-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #FFFFFF;
+  text-align: center;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+
+.login-card-sub {
+  font-size: 15px;
+  color: #B8C4D9;
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+
+/* --- FORMS & INPUTS --- */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.signup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.signup-grid-full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .signup-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.input-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #B8C4D9;
+}
+
+.input {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+  font-size: 15px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.input::placeholder {
+  color: rgba(184, 196, 217, 0.4);
+}
+
+.input:focus, .input:focus-visible {
+  border-color: #1EA7FF;
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 25px rgba(30, 167, 255, 0.25), inset 0 0 0 1px #1EA7FF;
+}
+
+.input.error {
+  border-color: #EF4444;
+}
+
+.input.error:focus, .input.error:focus-visible {
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.25), inset 0 0 0 1px #EF4444;
+}
+
+.input-error-text {
+  font-size: 12px;
+  color: #EF4444;
+  margin-top: 4px;
+}
+
+.password-strength-container {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.password-strength-segment {
+  height: 4px;
+  flex: 1;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  transition: background-color 300ms ease;
+}
+
+.password-hint {
+  font-size: 12px;
+  color: #B8C4D9;
+  margin-top: 6px;
+}
+
+.login-pw-wrap {
+  position: relative;
+}
+
+.login-pw-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #B8C4D9;
+  display: flex;
+  align-items: center;
+  padding: 14px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.login-pw-toggle:hover {
+  color: #fff;
+}
+
+/* --- BUTTONS --- */
+.btn-submit {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #2563EB, #1EA7FF);
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 25px rgba(30, 167, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.btn-submit::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(90deg, #1EA7FF, #2563EB);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn-submit::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transform: skewX(-20deg);
+  transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-submit > * {
+  position: relative;
+  z-index: 2;
+}
+
+.btn-submit:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 35px rgba(30, 167, 255, 0.45);
+}
+
+.btn-submit:hover:not(:disabled)::before {
+  opacity: 1;
+}
+
+.btn-submit:hover:not(:disabled)::after {
+  left: 150%;
+}
+
+.btn-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+
+/* --- ROLE SELECTION (SIGNUP) & LOGIN PILLS --- */
+.role-selector {
+  display: flex;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 99px;
+  padding: 6px;
+  position: relative;
+  margin-bottom: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.role-slider {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  border-radius: 99px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+.role-pill {
+  flex: 1;
+  position: relative;
+  z-index: 2;
+  border: none;
+  background: transparent;
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #B8C4D9;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  text-align: center;
+}
+
+.role-pill.active {
+  color: #fff;
+}
+
+
+.role-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+  margin-bottom: 24px;
+}
+
+.role-card {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.role-card-content { flex: 1; }
+
+.role-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.role-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 8px;
+  transition: color 0.3s ease;
+}
+
+.role-card-desc {
+  font-size: 14px;
+  color: #B8C4D9;
+  line-height: 1.5;
+}
+
+.role-checkmark {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.5;
+  margin-left: 16px;
+}
+
+.role-card.active .role-checkmark {
+  opacity: 1;
+  background: currentColor;
+  border-color: currentColor;
+}
+
+.role-card.active .role-checkmark svg {
+  color: #fff;
+  animation: popIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.role-card.admin.active { border-color: #1EA7FF; box-shadow: 0 0 25px rgba(30, 167, 255, 0.2), inset 0 0 20px rgba(30, 167, 255, 0.05); background: rgba(30, 167, 255, 0.05); color: #1EA7FF; }
+.role-card.admin.active .role-card-title { color: #1EA7FF; }
+
+.role-card.manager.active { border-color: #3B82F6; box-shadow: 0 0 25px rgba(59, 130, 246, 0.2), inset 0 0 20px rgba(59, 130, 246, 0.05); background: rgba(59, 130, 246, 0.05); color: #3B82F6; }
+.role-card.manager.active .role-card-title { color: #3B82F6; }
+
+.role-card.employee.active { border-color: #2563EB; box-shadow: 0 0 25px rgba(37, 99, 235, 0.2), inset 0 0 20px rgba(37, 99, 235, 0.05); background: rgba(37, 99, 235, 0.05); color: #2563EB; }
+.role-card.employee.active .role-card-title { color: #2563EB; }
+
+
+/* --- UTILS & ANIMATIONS --- */
+.step-indicator {
+  font-size: 14px;
+  color: #B8C4D9;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #B8C4D9;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.back-btn:hover { color: #fff; }
+
+.login-error {
+  padding: 14px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  font-size: 14px;
+  color: #EF4444;
+  text-align: center;
+}
+
+.spin-icon { animation: spin 750ms linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.animate-entrance { animation: cardEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes cardEntrance { 0% { opacity: 0; transform: translateY(40px) scale(0.95); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+
+.stagger-1 { opacity: 0; animation: cardEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards; }
+.stagger-2 { opacity: 0; animation: cardEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; }
+.stagger-3 { opacity: 0; animation: cardEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards; }
+.stagger-4 { opacity: 0; animation: cardEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards; }
+
+.form-step { animation: stepFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes stepFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- LIGHT MODE OVERRIDES --- */
+[data-theme='light'] .login-page {
+  background-color: var(--bg-page);
+  color: var(--text-body);
+}
+
+[data-theme='light'] .auth-gradient-mesh {
+  background: var(--bg-page);
+  animation: none;
+}
+
+[data-theme='light'] .auth-blob {
+  opacity: 0.15;
+}
+
+[data-theme='light'] .auth-float-card.glass-panel,
+[data-theme='light'] .login-card {
+  background: var(--bg-surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
+  color: var(--text-heading);
+}
+
+[data-theme='light'] .login-card-title,
+[data-theme='light'] .role-card-title {
+  color: var(--text-heading);
+}
+
+[data-theme='light'] .login-card-sub,
+[data-theme='light'] .input-label,
+[data-theme='light'] .role-pill,
+[data-theme='light'] .role-card-desc,
+[data-theme='light'] .float-card-header {
+  color: var(--text-body);
+}
+
+[data-theme='light'] .float-card-value span,
+[data-theme='light'] .password-hint {
+  color: var(--text-muted);
+}
+
+[data-theme='light'] .input {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  color: var(--text-heading);
+}
+
+[data-theme='light'] .input::placeholder {
+  color: var(--text-muted);
+}
+
+[data-theme='light'] .input:focus,
+[data-theme='light'] .input:focus-visible {
+  border-color: var(--brand-primary);
+  background: var(--bg-surface);
+  box-shadow: 0 0 0 1px var(--brand-primary);
+}
+
+[data-theme='light'] .role-selector {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+}
+
+[data-theme='light'] .role-pill.active {
+  color: #fff;
+}
+
+[data-theme='light'] .role-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+}
+
+[data-theme='light'] .role-card.active {
+  background: var(--bg-input);
+  box-shadow: var(--shadow);
+}
+[data-theme='light'] .role-card.admin.active { border-color: #1EA7FF; }
+[data-theme='light'] .role-card.manager.active { border-color: #3B82F6; }
+[data-theme='light'] .role-card.employee.active { border-color: #2563EB; }
+
+[data-theme='light'] .login-pw-toggle,
+[data-theme='light'] .back-btn {
+  color: var(--text-body);
+}
+[data-theme='light'] .login-pw-toggle:hover,
+[data-theme='light'] .back-btn:hover {
+  color: var(--text-heading);
+}

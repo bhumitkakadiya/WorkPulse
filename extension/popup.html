@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WorkPulse Extension</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <img src="icon48.png" alt="Logo" width="24" height="24" onerror="this.style.display='none'">
+    <h2>WorkPulse</h2>
+  </div>
+
+  <div class="content">
+    <div class="status-box" id="statusBox">
+      <div class="status-indicator" id="statusDot"></div>
+      <span id="statusText">Checking status...</span>
+    </div>
+
+    <div class="form-group">
+      <label>API URL</label>
+      <input type="text" id="apiUrl" placeholder="http://localhost:5000/api">
+    </div>
+
+    <div class="form-group">
+      <label>Auth Token</label>
+      <input type="password" id="apiToken" placeholder="Paste employee JWT here">
+    </div>
+
+    <div class="toggle-group">
+      <label>Enable Tracking</label>
+      <input type="checkbox" id="isTracking" checked>
+    </div>
+
+    <button id="saveBtn">Save Settings</button>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
