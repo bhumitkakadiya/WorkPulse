@@ -5,6 +5,7 @@ import HeaderActions from '../../components/HeaderActions';
 import ActivityTimeline from '../../components/ActivityTimeline';
 import AppUsageChart from '../../components/AppUsageChart';
 import ProductivityScoreCard from '../../components/ProductivityScoreCard';
+import SkeletonLoader from '../../components/SkeletonLoader';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
@@ -78,7 +79,9 @@ export default function EmployeeDrilldown() {
           </div>
 
           {loading ? (
-            <div className="loading-center"><div className="spinner" /></div>
+            <div style={{ padding: '20px' }}>
+              <SkeletonLoader type="card" count={3} />
+            </div>
           ) : (
             <div className="data-grid">
               {/* Timeline */}

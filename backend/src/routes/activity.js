@@ -37,7 +37,7 @@ router.get('/:id/screenshots', async (req, res) => {
 
     res.json({ success: true, screenshots });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -59,7 +59,7 @@ router.get('/:id/history', async (req, res) => {
 
     res.json({ success: true, history });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -83,7 +83,7 @@ router.get('/:id/live-status', async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 

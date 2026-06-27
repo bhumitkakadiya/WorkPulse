@@ -65,4 +65,42 @@ User command: "${text}"`;
   res.json({ success: result === 'success', action: parsedAction, result, errorMessage, logId: log._id });
 });
 
+// @route  POST /api/ai/query
+// Sends NL text to Gemini, returns a natural language response
+router.post('/query', async (req, res) => {
+  const { text } = req.body;
+  if (!text) return res.status(400).json({ success: false, message: 'text is required' });
+
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey || apiKey === 'your_gemini_api_key_here') {
+      // Demo mode
+      setTimeout(() => {
+        res.json({ 
+          success: true, 
+          response: "This is a demo response. Please configure a valid GEMINI_API_KEY to receive real AI insights." 
+        });
+      }, 1000);
+      return;
+    }
+
+    const { GoogleGenerativeAI } = require('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    const systemPrompt = `You are Pulse AI, an intelligent HR and productivity assistant for WorkPulse.
+Answer the user's question helpfully and concisely.
+
+User query: "${text}"`;
+
+    const geminiRes = await model.generateContent(systemPrompt);
+    const responseText = geminiRes.response.text().trim();
+
+    res.json({ success: true, response: responseText });
+  } catch (err) {
+    console.error('[AI Query Error]', err);
+    res.status(500).json({ success: false, message: 'Pulse AI is unavailable right now. Please try again.' });
+  }
+});
+
 module.exports = router;

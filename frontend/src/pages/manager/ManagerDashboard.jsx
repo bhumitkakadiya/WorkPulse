@@ -6,11 +6,12 @@ import HeaderActions from '../../components/HeaderActions';
 import ManagerAlerts from '../../components/ManagerAlerts';
 import AnimatedNumber from '../../components/AnimatedNumber';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
 } from 'recharts';
 import { Users, TrendingUp, Activity, Shield, RefreshCw, Download, ArrowRight } from 'lucide-react';
 import PageHeader from '../../components/dashboard/PageHeader';
 import StatCard from '../../components/dashboard/StatCard';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 import './ManagerDashboard.css';
 
 function formatDuration(secs) {
@@ -23,22 +24,26 @@ export default function ManagerDashboard() {
   const { user } = useAuth();
   const [team, setTeam] = useState([]);
   const [analytics, setAnalytics] = useState(null);
+  const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [days, setDays] = useState(7);
 
   const load = async () => {
     setLoading(true);
     try {
-      const [teamRes, analyticsRes] = await Promise.all([
+      const [teamRes, analyticsRes, alertsRes] = await Promise.all([
         managerAPI.getTeam(),
-        managerAPI.getAnalytics(),
+        managerAPI.getAnalytics({ days }),
+        managerAPI.getAlerts().catch(() => ({ data: { alerts: [] } })),
       ]);
       setTeam(teamRes.data.team || []);
       setAnalytics(analyticsRes.data);
+      setAlerts(alertsRes.data.alerts || []);
     } catch (e) { console.error(e); }
-    finally { setLoading(false); }
+    finally { setLoading(false); };
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [days]);
 
   const employees = team.filter(m => m.role === 'employee');
   const online = employees.filter(m => m.onlineStatus === 'online').length;
@@ -70,26 +75,35 @@ export default function ManagerDashboard() {
           {/* Stat row */}
           <div className="admin-stats-row">
             {[
-              { label: 'Total Employees', value: employees.length, icon: Users, iconClass: 'blue' },
-              { label: 'Online Now', value: online, icon: Activity, iconClass: 'green' },
-              { label: "Today's Avg Score", value: `${avgScore}%`, icon: TrendingUp, iconClass: 'purple' },
-              { label: 'Total Alerts', value: team.length, icon: Shield, iconClass: 'amber' },
-            ].map(stat => (
-              <StatCard key={stat.label} {...stat} />
+              { label: 'Total Employees', value: employees.length, icon: Users, iconClass: 'blue', borderClass: 'border-blue', trendText: '+1 this week', trendColor: 'var(--success)', delay: '0ms' },
+              { label: 'Online Now', value: online, icon: Activity, iconClass: 'green', borderClass: 'border-green', trendText: 'All active', trendColor: 'var(--success)', delay: '80ms' },
+              { label: "Today's Avg Score", value: `${avgScore}%`, icon: TrendingUp, iconClass: 'purple', borderClass: 'border-purple', trendText: 'Target 75%', trendColor: 'var(--text-muted)', delay: '160ms' },
+              { label: 'Active Alerts', value: alerts.filter(a => !a.isRead).length, icon: Shield, iconClass: 'amber', borderClass: 'border-amber', trendText: 'Requires attention', trendColor: 'var(--warning)', delay: '240ms' },
+            ].map((stat, i) => (
+              <div key={stat.label} className="animate-fade-in-up" style={{ animationDelay: stat.delay }}>
+                <StatCard {...stat} />
+              </div>
             ))}
           </div>
 
-          <div className="data-grid">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
             {/* Team Score Trend */}
-            <div className="glass-panel" style={{ gridColumn: 'span 2' }}>
+            <div className="glass-panel" style={{ flex: '1 1 600px', minWidth: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
                 <div>
-                  <h3 style={{ fontSize: 18, marginBottom: 4 }}>7-Day Team Score Trend</h3>
+                  <h3 style={{ fontSize: 18, marginBottom: 4 }}>Productivity Trend</h3>
                   <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Average productivity score across all team members</div>
                 </div>
-                <button className="btn btn-outline" onClick={load} disabled={loading}>
-                  <RefreshCw size={14} className={loading ? 'spin-icon' : ''} /> Refresh
-                </button>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <div className="admin-filter-tabs">
+                    <button className={`admin-filter-tab ${days === 7 ? 'active' : ''}`} onClick={() => setDays(7)}>7D</button>
+                    <button className={`admin-filter-tab ${days === 14 ? 'active' : ''}`} onClick={() => setDays(14)}>14D</button>
+                    <button className={`admin-filter-tab ${days === 30 ? 'active' : ''}`} onClick={() => setDays(30)}>30D</button>
+                  </div>
+                  <button className="btn btn-outline btn-sm" onClick={load} disabled={loading}>
+                    <RefreshCw size={14} className={loading ? 'spin-icon' : ''} />
+                  </button>
+                </div>
               </div>
               {analytics?.trendData && (
                 <ResponsiveContainer width="100%" height={200}>
@@ -103,34 +117,41 @@ export default function ManagerDashboard() {
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis dataKey="date" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickFormatter={d => d.slice(5)} />
                     <YAxis domain={[0, 100]} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                    <ReferenceLine y={75} label={{ position: 'insideTopRight', value: 'Target', fill: 'var(--warning)', fontSize: 11 }} stroke="var(--warning)" strokeDasharray="3 3" />
                     <Tooltip
-                      contentStyle={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, backdropFilter: 'blur(10px)' }}
+                      contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, backdropFilter: 'blur(10px)', boxShadow: 'var(--shadow)' }}
                       labelStyle={{ color: 'var(--text)' }}
+                      formatter={(value) => [`${value}%`, 'Avg Score']}
                     />
-                    <Area type="monotone" dataKey="avgScore" name="Avg Score" stroke="var(--accent-primary)" fill="url(#scoreGrad)" strokeWidth={3} dot={{ fill: 'var(--bg-primary)', stroke: 'var(--accent-primary)', strokeWidth: 2, r: 4 }} />
+                    <Area type="monotone" dataKey="avgScore" name="Avg Score" stroke="var(--accent-primary)" fill="url(#scoreGrad)" strokeWidth={3} dot={{ fill: 'var(--surface)', stroke: 'var(--accent-primary)', strokeWidth: 2, r: 4 }} activeDot={{ r: 6 }} />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
             </div>
 
             {/* Live Team Presence (New Feature) */}
-            <div className="glass-panel card-3d">
+            <div className="glass-panel card-3d" style={{ flex: '1 1 300px', minWidth: 0 }}>
               <h3 style={{ fontSize: 18, marginBottom: 16 }}>Live Team Presence</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {employees.slice(0, 5).map(emp => (
                   <div key={emp._id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 8, borderRadius: 8, background: 'var(--bg-page)' }}>
                     <div style={{ position: 'relative' }}>
                       <div className="user-avatar" style={{ width: 36, height: 36, fontSize: 14 }}>{emp.name.charAt(0)}</div>
-                      <div className={`status-dot status-dot-${emp.onlineStatus}`} style={{ position: 'absolute', bottom: -2, right: -2, border: '2px solid var(--bg-secondary)' }}>
-                         {emp.onlineStatus === 'online' && <div className="ping" />}
+                      <div style={{ position: 'absolute', bottom: -2, right: -2 }}>
+                        {emp.onlineStatus === 'online' ? <div className="status-dot-pulse active" /> : <div className={`status-dot status-dot-${emp.onlineStatus}`} />}
                       </div>
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 14, fontWeight: 500 }}>{emp.name}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{emp.onlineStatus === 'online' ? 'Working (Active)' : 'Away / Idle'}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{emp.name}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{emp.department || '—'}</div>
                     </div>
-                    <div style={{ fontSize: 14, fontWeight: 'bold', color: scoreColor(emp.todayScore || 0) }}>
-                      {emp.todayScore || 0}%
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                      <div style={{ fontSize: 15, fontWeight: 'bold', color: scoreColor(emp.todayScore || 0) }}>
+                        {emp.todayScore || 0}%
+                      </div>
+                      <Link to={`/manager/team/${emp._id}/activity`} style={{ fontSize: 11, color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 500 }}>
+                        Timeline
+                      </Link>
                     </div>
                   </div>
                 ))}
@@ -155,21 +176,23 @@ export default function ManagerDashboard() {
           </div>
 
           {loading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><div className="spinner" /></div>
+            <div style={{ marginTop: 24 }}>
+              <LoadingSkeleton type="table" count={5} />
+            </div>
           ) : (
-            <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
+            <div className="admin-table-card" style={{ padding: 0, overflowY: 'auto', maxHeight: 400 }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                   <tr>
-                    <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Employee</th>
-                    <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Current Status</th>
-                    <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Today's Score</th>
-                    <th style={{ padding: '12px 24px', textAlign: 'right', fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Action</th>
+                    <th>Employee</th>
+                    <th>Current Status</th>
+                    <th>Today's Score</th>
+                    <th style={{ textAlign: 'right' }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {employees.map(emp => (
-                    <tr key={emp._id} style={{ borderBottom: '1px solid var(--border-light)', transition: 'background 0.2s' }}>
+                    <tr key={emp._id}>
                       <td style={{ padding: '16px 24px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                           <div className="user-avatar">{emp.name.charAt(0)}</div>

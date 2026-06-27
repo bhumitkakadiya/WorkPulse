@@ -254,24 +254,7 @@
   overflow-y: auto;
 }
 
-.login-card::-webkit-scrollbar {
-  width: 14px;
-}
-.login-card::-webkit-scrollbar-track {
-  background: transparent;
-  margin: 24px 0;
-}
-.login-card::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  border: 4px solid transparent;
-  background-clip: padding-box;
-}
-.login-card::-webkit-scrollbar-button {
-  display: none !important;
-  width: 0;
-  height: 0;
-}
+
 
 .login-card.signup-mode {
   max-width: 700px; /* Signup specific */

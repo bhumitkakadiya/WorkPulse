@@ -27,7 +27,7 @@ router.get('/', hasPermission(PERMISSIONS.MANAGE_SYSTEM_SETTINGS), async (req, r
 
     res.json({ success: true, logs, total, pages: Math.ceil(total / limit) });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 

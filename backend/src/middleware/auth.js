@@ -85,3 +85,5 @@ exports.hasPermission = (permissionKey) => {
     next();
   };
 };
+
+exports.getEffectivePermissions = getEffectivePermissions;

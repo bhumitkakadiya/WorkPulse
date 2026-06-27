@@ -23,7 +23,7 @@ router.get('/stats', async (req, res) => {
     const totalAlerts = await Alert.countDocuments({});
     res.json({ success: true, stats: { totalUsers, activeCount, departments, totalAlerts, roleBreakdown } });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -36,17 +36,53 @@ router.get('/users', async (req, res) => {
 // @route  POST /api/admin/users
 router.post('/users', async (req, res) => {
   try {
-    const { name, email, password, role, department, managerId } = req.body;
-    // Auto-generate userId and mobileNumber for admin-created users
-    const baseHandle = name.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 16);
-    let userId = baseHandle || 'user';
-    let suffix = 1;
-    while (await User.findOne({ userId })) { userId = `${baseHandle}${suffix++}`; }
-    const mobileNumber = `admin${Date.now().toString().slice(-7)}`;
-    const user = await User.create({ name, email, password: password || 'Changeme1', role, department, managerId, userId, mobileNumber, isActive: true });
-    res.status(201).json({ success: true, user });
+    const { name, email, password, role, department, managerId, userId: rawUserId, mobileNumber: rawMobile } = req.body;
+    if (!name || !email) {
+      return res.status(400).json({ success: false, message: 'Name and email are required' });
+    }
+
+    // Check email uniqueness early
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+      return res.status(400).json({ success: false, message: 'A user with this email already exists' });
+    }
+
+    // Auto-generate userId if not provided
+    let userId = rawUserId?.toLowerCase().replace(/[^a-z0-9]/g, '') || '';
+    if (!userId) {
+      const baseHandle = name.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 12) || 'user';
+      userId = baseHandle;
+      let suffix = 1;
+      while (await User.findOne({ userId })) { userId = `${baseHandle}${suffix++}`; }
+    } else {
+      const userIdExists = await User.findOne({ userId });
+      if (userIdExists) {
+        return res.status(400).json({ success: false, message: 'This username is already taken' });
+      }
+    }
+
+    // Auto-generate mobileNumber if not provided (unique placeholder)
+    const mobileNumber = rawMobile || `org${Date.now().toString().slice(-9)}`;
+    
+    // Auto-assign the requesting admin's orgId
+    const adminUser = await User.findById(req.user.id);
+    const orgId = adminUser?.orgId || 'default_org';
+
+    const user = await User.create({
+      name,
+      email,
+      password: password || 'Changeme1',
+      role: role || 'employee',
+      department: department || 'General',
+      managerId: managerId || null,
+      userId,
+      mobileNumber,
+      orgId,
+      isActive: true,
+    });
+    res.status(201).json({ success: true, user: { ...user.toObject(), password: undefined } });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    throw err;
   }
 });
 

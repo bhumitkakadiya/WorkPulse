@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { employeeAPI } from '../../api/index.js';
+import { employeeAPI, taskAPI } from '../../api/index.js';
 import axios from 'axios';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Activity, CheckSquare, Clock, HeartPulse, X } from 'lucide-react';
@@ -15,6 +15,8 @@ export default function EmployeeDashboard() {
   const [timeline, setTimeline] = useState(null);
   const [scoreData, setScoreData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [tasksDue, setTasksDue] = useState(0);
+  const [myAlerts, setMyAlerts] = useState([]);
   
   const [isPulseModalOpen, setIsPulseModalOpen] = useState(false);
   const [pulseData, setPulseData] = useState({ moodScore: 3, workloadScore: 3, blockerText: '' });
@@ -22,17 +24,30 @@ export default function EmployeeDashboard() {
   const load = async () => {
     setLoading(true);
     try {
-      const [tlRes, scoreRes] = await Promise.all([
+      const [tlRes, scoreRes, tasksRes] = await Promise.all([
         employeeAPI.getTimeline(date),
         employeeAPI.getScore(7),
+        taskAPI.getTasks().catch(() => ({ data: { tasks: [] } })),
       ]);
       setTimeline(tlRes.data);
       setScoreData(scoreRes.data);
+      // Count tasks that are due today or overdue and not done
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      const dueTasks = (tasksRes.data.tasks || []).filter(t => 
+        t.status !== 'done' && t.dueDate && new Date(t.dueDate) <= today
+      );
+      setTasksDue(dueTasks.length);
     } catch (e) { 
       console.error(e); 
     } finally { 
       setLoading(false); 
     }
+    // Fetch employee alerts separately (non-blocking)
+    try {
+      const alertRes = await axios.get('/api/employee/alerts').catch(() => ({ data: { alerts: [] } }));
+      setMyAlerts((alertRes.data.alerts || []).slice(0, 5));
+    } catch {}
   };
 
   useEffect(() => { 
@@ -46,7 +61,7 @@ export default function EmployeeDashboard() {
   const handlePulseSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('/api/wellbeing/pulse-survey', pulseData);
+      await axios.post('/api/wellbeing/survey', pulseData);
       setIsPulseModalOpen(false);
       localStorage.setItem('pulse_submitted_this_week', 'true');
       alert('Thank you for your feedback!');
@@ -98,7 +113,7 @@ export default function EmployeeDashboard() {
             { label: "Today's Score", value: `${latestScore}%`, icon: TrendingUp, iconClass: 'purple' },
             { label: 'Active Time', value: activeTimeStr, icon: Activity, iconClass: 'green' },
             { label: 'Total Sessions', value: sessions.length, icon: Clock, iconClass: 'blue' },
-            { label: 'Tasks Due', value: 0, icon: CheckSquare, iconClass: 'amber' }, // Stub for now
+            { label: 'Tasks Due', value: tasksDue, icon: CheckSquare, iconClass: 'amber' },
           ].map(stat => (
             <StatCard key={stat.label} {...stat} />
           ))}
@@ -137,7 +152,7 @@ export default function EmployeeDashboard() {
             
             <AlertPanel 
               title="My Alerts" 
-              alerts={[]} 
+              alerts={myAlerts} 
               emptyMessage="You have no active alerts" 
             />
           </div>

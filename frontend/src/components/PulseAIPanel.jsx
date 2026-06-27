@@ -1,167 +1,169 @@
-import { useState, useRef, useEffect } from 'react';
-import { Send, Mic, MicOff, Bot, X, Minimize2, Maximize2, Loader } from 'lucide-react';
-import { aiAPI } from '../api/index.js';
-import './PulseAIPanel.css';
+import React, { useState, useRef, useEffect } from 'react';
+import { Sparkles, X, Send, Mic } from 'lucide-react';
+import { aiAPI } from '../api';
 
 const SUGGESTIONS = [
-  'Open Visual Studio Code',
-  'Search how to center a div in CSS',
-  'Open GitHub in browser',
-  'Close Spotify',
+  'Who has the lowest productivity this week?',
+  'How many alerts were triggered today?',
+  'Show me Casey Designer\'s activity summary',
+  'Which apps are most distracting?'
 ];
 
-export default function PulseAIPanel({ onClose }) {
-  const [messages, setMessages] = useState([
-    { role: 'assistant', text: 'Hi! I\'m Pulse AI 👋 Tell me what you need — open apps, search the web, close programs, or run routines.' }
-  ]);
+export default function PulseAIPanel({ isOpen, onClose }) {
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [minimized, setMinimized] = useState(false);
-  const [listening, setListening] = useState(false);
-  const bottomRef = useRef(null);
-  const recognitionRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
 
-  const send = async (text) => {
-    if (!text.trim() || loading) return;
+  if (!isOpen) return null;
+
+  const handleSend = async (text) => {
+    if (!text.trim()) return;
+    
     const userMsg = { role: 'user', text };
-    setMessages(m => [...m, userMsg]);
+    setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
 
     try {
-      const res = await aiAPI.sendCommand(text);
-      const { action, result, errorMessage } = res.data;
-      let reply = '';
-      if (result === 'success' && action) {
-        reply = `✅ Got it! I'll ${formatAction(action)}.`;
-      } else {
-        reply = `⚠️ I couldn't process that: ${errorMessage || 'Unknown error'}. Please try rephrasing.`;
-      }
-      setMessages(m => [...m, { role: 'assistant', text: reply, action }]);
+      const res = await aiAPI.query(text);
+      setMessages(prev => [...prev, { role: 'ai', text: res.data.response }]);
     } catch (err) {
-      setMessages(m => [...m, { role: 'assistant', text: '❌ Connection error. Please check the backend is running.' }]);
+      setMessages(prev => [...prev, { role: 'ai', text: 'Pulse AI is unavailable right now. Please try again.', error: true }]);
     } finally {
       setLoading(false);
     }
   };
 
-  function formatAction(action) {
-    if (!action) return 'process that';
-    switch (action.name) {
-      case 'open_app': return `open ${action.args?.app_name}`;
-      case 'close_app': return `close ${action.args?.app_name}`;
-      case 'open_url': return `open ${action.args?.url}`;
-      case 'web_search': return `search for "${action.args?.query}"`;
-      case 'run_routine': return `run routine "${action.args?.routine_name}"`;
-      default: return 'process that';
-    }
-  }
-
-  const startVoice = () => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert('Voice input not supported in this browser.');
-      return;
-    }
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognitionRef.current = new SR();
-    recognitionRef.current.continuous = false;
-    recognitionRef.current.interimResults = false;
-    recognitionRef.current.onresult = (e) => {
-      const t = e.results[0][0].transcript;
-      setInput(t);
-      setListening(false);
-    };
-    recognitionRef.current.onerror = () => setListening(false);
-    recognitionRef.current.onend = () => setListening(false);
-    recognitionRef.current.start();
-    setListening(true);
-  };
-
-  const stopVoice = () => { recognitionRef.current?.stop(); setListening(false); };
-
-  if (minimized) {
-    return (
-      <div className="pulse-ai-minimized" onClick={() => setMinimized(false)}>
-        <Bot size={20} />
-        <span>Pulse AI</span>
-        <Maximize2 size={14} />
-      </div>
-    );
-  }
-
   return (
-    <div className="pulse-ai-panel">
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      right: 0,
+      width: 420,
+      height: '100vh',
+      background: 'var(--bg-card)',
+      borderLeft: '1px solid var(--border)',
+      boxShadow: '-4px 0 24px rgba(0,0,0,0.1)',
+      zIndex: 999,
+      display: 'flex',
+      flexDirection: 'column',
+      animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+    }}>
       {/* Header */}
-      <div className="pulse-ai-header">
-        <div className="pulse-ai-header-left">
-          <div className="pulse-ai-icon"><Bot size={18} /></div>
-          <div>
-            <div className="pulse-ai-title">Pulse AI</div>
-            <div className="pulse-ai-subtitle">Jarvis-style assistant</div>
-          </div>
+      <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 18, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--brand-primary)' }}>
+            <Sparkles size={20} /> Pulse AI
+          </h2>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Powered by Google Gemini</div>
         </div>
-        <div className="pulse-ai-header-actions">
-          <button className="btn btn-icon btn-ghost btn-sm" onClick={() => setMinimized(true)} title="Minimize"><Minimize2 size={16} /></button>
-          {onClose && <button className="btn btn-icon btn-ghost btn-sm" onClick={onClose} title="Close"><X size={16} /></button>}
-        </div>
+        <button className="btn btn-ghost btn-icon" onClick={onClose}><X size={20} /></button>
       </div>
 
-      {/* Messages */}
-      <div className="pulse-ai-messages">
-        <div style={{ flex: 1 }} />
-        {messages.map((msg, i) => (
-          <div key={i} className={`pulse-msg pulse-msg-${msg.role}`}>
-            {msg.role === 'assistant' && <div className="pulse-msg-avatar"><Bot size={14} /></div>}
-            <div className="pulse-msg-bubble">{msg.text}</div>
-          </div>
-        ))}
-        {loading && (
-          <div className="pulse-msg pulse-msg-assistant">
-            <div className="pulse-msg-avatar"><Bot size={14} /></div>
-            <div className="pulse-msg-bubble pulse-typing">
-              <span /><span /><span />
+      {/* Content Area */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {messages.length === 0 ? (
+          <div style={{ marginTop: 'auto', marginBottom: 'auto' }}>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <Sparkles size={32} style={{ color: 'var(--brand-primary)', margin: '0 auto 12px', opacity: 0.8 }} />
+              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)' }}>How can I help you today?</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>Ask about team performance, alerts, or insights.</div>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {SUGGESTIONS.map((s, i) => (
+                <button 
+                  key={i}
+                  onClick={() => handleSend(s)}
+                  style={{ 
+                    padding: '12px 16px', 
+                    background: 'var(--bg-secondary)', 
+                    border: '1px solid var(--border)', 
+                    borderRadius: 12, 
+                    fontSize: 13,
+                    color: 'var(--text)',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    transition: '0.2s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--brand-primary)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                >
+                  {s}
+                </button>
+              ))}
             </div>
           </div>
-        )}
-        {messages.length === 1 && (
-          <div className="pulse-suggestions">
-            {SUGGESTIONS.map(s => (
-              <button key={s} className="pulse-suggestion" onClick={() => send(s)}>{s}</button>
+        ) : (
+          <>
+            {messages.map((msg, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                <div style={{
+                  maxWidth: '85%',
+                  padding: '12px 16px',
+                  borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                  background: msg.role === 'user' ? 'var(--bg-secondary)' : (msg.error ? 'rgba(239, 68, 68, 0.1)' : 'rgba(139, 92, 246, 0.1)'),
+                  color: msg.error ? 'var(--danger)' : 'var(--text)',
+                  border: msg.role === 'user' ? '1px solid var(--border)' : (msg.error ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(139, 92, 246, 0.2)'),
+                  fontSize: 14,
+                  lineHeight: 1.5,
+                  whiteSpace: 'pre-wrap'
+                }}>
+                  {msg.text}
+                </div>
+              </div>
             ))}
-          </div>
+            {loading && (
+              <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                <div style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.2)', padding: '12px 16px', borderRadius: '18px 18px 18px 4px', display: 'flex', gap: 4, alignItems: 'center' }}>
+                  {[0, 1, 2].map(i => (
+                    <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--brand-primary)', animation: `bounce 1s ${i * 0.2}s infinite` }} />
+                  ))}
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </>
         )}
-        <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <form className="pulse-ai-input-row" onSubmit={e => { e.preventDefault(); send(input); }}>
-        <input
-          id="pulse-ai-input"
-          className="input"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder={listening ? 'Listening...' : 'Ask Pulse AI anything...'}
-          disabled={loading || listening}
-        />
-        <button
-          type="button"
-          className={`btn btn-icon ${listening ? 'btn-danger' : 'btn-ghost'}`}
-          onClick={listening ? stopVoice : startVoice}
-          title="Voice input"
+      {/* Input Area */}
+      <div style={{ padding: '20px 24px', borderTop: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+        <form 
+          onSubmit={(e) => { e.preventDefault(); handleSend(input); }} 
+          style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 24, padding: '4px 16px', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)' }}
         >
-          {listening ? <MicOff size={16} /> : <Mic size={16} />}
-        </button>
-        <button
-          id="pulse-ai-send"
-          type="submit"
-          className="btn btn-primary btn-icon"
-          disabled={!input.trim() || loading}
-        >
-          {loading ? <Loader size={16} className="spin-icon" /> : <Send size={16} />}
-        </button>
-      </form>
+          <input
+            style={{ flex: 1, border: 'none', background: 'transparent', padding: '10px 0', fontSize: 14, outline: 'none', color: 'var(--text-primary)' }}
+            placeholder="Ask about your team performance..."
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            disabled={loading}
+          />
+          <button type="button" className="btn btn-ghost btn-icon" style={{ padding: 6, color: 'var(--text-muted)' }} title="Voice input (coming soon)">
+            <Mic size={18} />
+          </button>
+          <button
+            type="submit"
+            className="btn btn-primary btn-icon"
+            style={{ borderRadius: '50%', width: 36, height: 36, marginLeft: 8 }}
+            disabled={!input.trim() || loading}
+          >
+            <Send size={16} />
+          </button>
+        </form>
+      </div>
+      <style>{`
+        @keyframes slideInRight {
+          from { transform: translateX(100%); }
+          to { transform: translateX(0); }
+        }
+      `}</style>
     </div>
   );
 }

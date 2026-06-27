@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { employeeAPI } from '../../api/index.js';
 import HeaderActions from '../../components/HeaderActions';
 import PulseAIPanel from '../../components/PulseAIPanel';
+import SkeletonLoader from '../../components/SkeletonLoader';
 import { Bot, CheckCircle, XCircle, Clock, Mic, MessageSquare, Zap } from 'lucide-react';
 import './PulseAIPage.css';
 
@@ -127,9 +128,10 @@ export default function PulseAIPage() {
                   <div className="section-title">Recent Commands</div>
                   <button className="btn btn-ghost btn-sm" onClick={load}>Refresh</button>
                 </div>
-
                 {loading ? (
-                  <div className="loading-center"><div className="spinner" /></div>
+                  <div style={{ padding: '20px' }}>
+                    <SkeletonLoader type="text" count={3} />
+                  </div>
                 ) : (
                   <div className="ai-history-list" style={{ maxHeight: 300, overflowY: 'auto', paddingRight: 8 }}>
                     {commands.map((cmd, i) => (

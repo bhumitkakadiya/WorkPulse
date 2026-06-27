@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
     const roles = await Role.find().sort({ level: 1 });
     res.json({ success: true, roles });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -51,7 +51,7 @@ router.post('/', hasPermission(PERMISSIONS.MANAGE_ROLES), async (req, res) => {
     
     res.status(201).json({ success: true, role });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -89,7 +89,7 @@ router.put('/:id', hasPermission(PERMISSIONS.MANAGE_ROLES), async (req, res) => 
     
     res.json({ success: true, role: updatedRole });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -129,7 +129,7 @@ router.delete('/:id', hasPermission(PERMISSIONS.MANAGE_ROLES), async (req, res) 
 
     res.json({ success: true, message: 'Role deleted' });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -144,7 +144,7 @@ router.get('/:id/permissions', async (req, res) => {
     
     res.json({ success: true, permissions: role.permissions });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 

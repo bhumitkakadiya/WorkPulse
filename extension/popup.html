@@ -2,37 +2,84 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>WorkPulse Extension</title>
+  <title>WorkPulse Tracker</title>
   <link rel="stylesheet" href="popup.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="header">
-    <img src="icon48.png" alt="Logo" width="24" height="24" onerror="this.style.display='none'">
-    <h2>WorkPulse</h2>
+    <div class="logo">
+      <img src="icon48.png" alt="Logo" width="20" height="20" onerror="this.style.display='none'">
+      <h2>Work<span>Pulse</span></h2>
+    </div>
+    <div class="status-badge" id="statusBadge">Checking...</div>
   </div>
 
-  <div class="content">
-    <div class="status-box" id="statusBox">
-      <div class="status-indicator" id="statusDot"></div>
-      <span id="statusText">Checking status...</span>
+  <div class="content" id="mainContent">
+    <div class="card score-card">
+      <div class="score-container">
+        <svg class="score-ring" width="60" height="60">
+          <circle cx="30" cy="30" r="26" class="score-ring-bg"></circle>
+          <circle cx="30" cy="30" r="26" class="score-ring-fill" id="scoreRingFill"></circle>
+        </svg>
+        <div class="score-value" id="scoreValue">--</div>
+      </div>
+      <div class="stats-container">
+        <div class="stat-item">
+          <div class="stat-label">Productive</div>
+          <div class="stat-value text-success" id="prodTime">--h --m</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Distracting</div>
+          <div class="stat-value text-danger" id="distTime">--h --m</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Idle</div>
+          <div class="stat-value text-muted" id="idleTime">--h --m</div>
+        </div>
+      </div>
     </div>
 
+    <div class="card">
+      <h3 class="section-title">Current Activity</h3>
+      <div class="current-activity" id="currentActivity">
+        <div class="activity-info">
+          <div class="activity-domain" id="currentDomain">Loading...</div>
+          <div class="activity-time" id="currentDuration">--:--</div>
+        </div>
+        <div class="activity-badge" id="currentBadge">Unknown</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="section-title">Recent Activity</h3>
+      <div class="recent-list" id="recentList">
+        <div class="loading-text">Loading history...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-content" id="settingsContent" style="display: none;">
     <div class="form-group">
       <label>API URL</label>
       <input type="text" id="apiUrl" placeholder="http://localhost:5000/api">
     </div>
-
     <div class="form-group">
       <label>Auth Token</label>
       <input type="password" id="apiToken" placeholder="Paste employee JWT here">
     </div>
+    <button id="saveBtn" class="btn btn-primary">Save Settings</button>
+  </div>
 
-    <div class="toggle-group">
-      <label>Enable Tracking</label>
-      <input type="checkbox" id="isTracking" checked>
+  <div class="footer">
+    <button id="dashboardBtn" class="btn btn-outline">Open Dashboard</button>
+    <div class="toggle-container">
+      <span class="toggle-label">Tracking</span>
+      <label class="switch">
+        <input type="checkbox" id="isTracking" checked>
+        <span class="slider"></span>
+      </label>
     </div>
-
-    <button id="saveBtn">Save Settings</button>
   </div>
   
   <script src="popup.js"></script>

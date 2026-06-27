@@ -93,13 +93,6 @@ export default function HomePage() {
                       <stop offset="50%" stopColor="rgba(96, 165, 250, 1)" />
                       <stop offset="100%" stopColor="rgba(96, 165, 250, 0)" />
                     </linearGradient>
-                    <filter id="neon-glow" x="-50%" y="-50%" width="200%" height="200%">
-                      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
-                      <feMerge>
-                        <feMergeNode in="coloredBlur"/>
-                        <feMergeNode in="SourceGraphic"/>
-                      </feMerge>
-                    </filter>
                   </defs>
                   
                   {/* Deep Outer Shadow */}
@@ -109,7 +102,6 @@ export default function HomePage() {
                     fill="none"
                     stroke="#1e3a8a"
                     strokeWidth="14"
-                    filter="url(#neon-glow)"
                     opacity="0.6"
                   />
                   {/* Neon Body */}
@@ -119,7 +111,6 @@ export default function HomePage() {
                     fill="none"
                     stroke="url(#pulse-gradient)"
                     strokeWidth="6"
-                    filter="url(#neon-glow)"
                   />
                   {/* Intense Hot Core */}
                   <path

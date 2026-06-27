@@ -16,6 +16,8 @@ router.post('/request', hasPermission(PERMISSIONS.REQUEST_LEAVES), async (req, r
     // For now, setting manager as the approver.
     const managerId = req.user.managerId;
 
+    const status = managerId ? 'pending' : 'approved';
+
     const newRequest = await LeaveRequest.create({
       userId: req.user.id,
       leaveTypeCode,
@@ -23,7 +25,7 @@ router.post('/request', hasPermission(PERMISSIONS.REQUEST_LEAVES), async (req, r
       endDate,
       days,
       reason,
-      status: managerId ? 'pending' : 'approved',
+      status,
       approvalChain: managerId ? [{
         approverId: managerId,
         approverRole: 'Manager',
@@ -31,9 +33,21 @@ router.post('/request', hasPermission(PERMISSIONS.REQUEST_LEAVES), async (req, r
       }] : []
     });
 
+    // Update LeaveBalance pending or used days
+    const currentYear = new Date(startDate).getFullYear();
+    const balance = await LeaveBalance.findOne({ userId: req.user.id, year: currentYear });
+    if (balance) {
+      const typeBalance = balance.balances.find(b => b.leaveTypeCode === leaveTypeCode);
+      if (typeBalance) {
+        if (status === 'pending') typeBalance.pending += days;
+        if (status === 'approved') typeBalance.used += days;
+        await balance.save();
+      }
+    }
+
     res.status(201).json({ success: true, request: newRequest });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -43,7 +57,7 @@ router.get('/my-requests', hasPermission(PERMISSIONS.VIEW_OWN_DATA), async (req,
     const requests = await LeaveRequest.find({ userId: req.user.id }).sort({ createdAt: -1 });
     res.json({ success: true, requests });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -53,7 +67,7 @@ router.get('/my-balance', hasPermission(PERMISSIONS.VIEW_OWN_DATA), async (req, 
     const balance = await LeaveBalance.findOne({ userId: req.user.id, year: new Date().getFullYear() });
     res.json({ success: true, balance: balance || { balances: [] } });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -63,7 +77,7 @@ router.get('/team-requests', hasPermission(PERMISSIONS.APPROVE_LEAVES), async (r
     const requests = await LeaveRequest.find({ 'approvalChain.approverId': req.user.id, status: 'pending' }).populate('userId', 'name email avatar');
     res.json({ success: true, requests });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -75,11 +89,24 @@ router.put('/:id/approve', hasPermission(PERMISSIONS.APPROVE_LEAVES), async (req
 
     // Update status in approval chain
     request.status = 'approved';
+    
+    // Update LeaveBalance
+    const currentYear = new Date(request.startDate).getFullYear();
+    const balance = await LeaveBalance.findOne({ userId: request.userId, year: currentYear });
+    if (balance) {
+      const typeBalance = balance.balances.find(b => b.leaveTypeCode === request.leaveTypeCode);
+      if (typeBalance) {
+        typeBalance.pending = Math.max(0, typeBalance.pending - request.days);
+        typeBalance.used += request.days;
+        await balance.save();
+      }
+    }
+    
     await request.save();
 
     res.json({ success: true, request });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -90,11 +117,23 @@ router.put('/:id/reject', hasPermission(PERMISSIONS.APPROVE_LEAVES), async (req,
     if (!request) return res.status(404).json({ success: false, message: 'Request not found' });
 
     request.status = 'rejected';
+
+    // Update LeaveBalance
+    const currentYear = new Date(request.startDate).getFullYear();
+    const balance = await LeaveBalance.findOne({ userId: request.userId, year: currentYear });
+    if (balance) {
+      const typeBalance = balance.balances.find(b => b.leaveTypeCode === request.leaveTypeCode);
+      if (typeBalance) {
+        typeBalance.pending = Math.max(0, typeBalance.pending - request.days);
+        await balance.save();
+      }
+    }
+
     await request.save();
 
     res.json({ success: true, request });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 

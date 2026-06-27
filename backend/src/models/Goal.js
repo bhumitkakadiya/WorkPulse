@@ -8,7 +8,12 @@ const GoalSchema = new mongoose.Schema({
   parentGoalId: { type: mongoose.Schema.Types.ObjectId, ref: 'Goal' }, // For OKR cascading
   status: { type: String, enum: ['on_track', 'at_risk', 'behind', 'completed'], default: 'on_track' },
   progressPercent: { type: Number, default: 0 },
-  targetDate: { type: Date }
+  targetDate: { type: Date },
+  keyResults: [{
+    title: { type: String, required: true },
+    target: { type: Number, required: true },
+    current: { type: Number, default: 0 }
+  }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Goal', GoalSchema);

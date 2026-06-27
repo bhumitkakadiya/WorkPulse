@@ -1,41 +1,59 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { SocketProvider } from './contexts/SocketContext';
+import { ToastProvider } from './contexts/ToastContext';
+import { Toaster } from 'react-hot-toast';
+import ErrorBoundary from './components/ErrorBoundary';
+import GlobalSearch from './components/GlobalSearch';
+import DashboardLayout from './components/DashboardLayout';
+import SkeletonLoader from './components/SkeletonLoader';
+import { Outlet } from 'react-router-dom';
 
-import HomePage from './pages/HomePage';
+// Eagerly load lightweight components
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import AuthLayout from './layouts/AuthLayout';
-import ManagerDashboard from './pages/manager/ManagerDashboard';
-import EmployeeDrilldown from './pages/manager/EmployeeDrilldown';
+import HomePage from './pages/HomePage';
 
-import EmployeeDashboard from './pages/employee/EmployeeDashboard';
-import PulseAIPage from './pages/employee/PulseAIPage';
-import ScreenshotsPage from './pages/employee/ScreenshotsPage';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminUsers from './pages/admin/AdminUsers';
-import AdminCategories from './pages/admin/AdminCategories';
-import AdminOrganization from './pages/admin/AdminOrganization';
-import AdminBilling from './pages/admin/AdminBilling';
-import AdminRoles from './pages/admin/AdminRoles';
-import AdminAuditLogs from './pages/admin/AdminAuditLogs';
-import SettingsPage from './pages/SettingsPage';
-import OnboardingPage from './pages/OnboardingPage';
-import TasksPage from './pages/TasksPage';
-import LeavesPage from './pages/LeavesPage';
-import GoalsPage from './pages/GoalsPage';
-import ActivityTimeline from './pages/ActivityTimeline';
-import MessagesPage from './pages/MessagesPage';
-import PerformancePage from './pages/PerformancePage';
-import ErrorBoundary from './components/ErrorBoundary';
-import GlobalSearch from './components/GlobalSearch';
+// Lazy load all dashboard pages for faster initial bundle
+const ManagerDashboard  = lazy(() => import('./pages/manager/ManagerDashboard'));
+const EmployeeDrilldown = lazy(() => import('./pages/manager/EmployeeDrilldown'));
+const EmployeeDashboard = lazy(() => import('./pages/employee/EmployeeDashboard'));
+const TeamActivity      = lazy(() => import('./pages/manager/TeamActivity'));
+const PulseAIPage       = lazy(() => import('./pages/employee/PulseAIPage'));
+const ScreenshotsPage   = lazy(() => import('./pages/employee/ScreenshotsPage'));
+const AdminDashboard    = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminUsers        = lazy(() => import('./pages/admin/AdminUsers'));
+const AdminCategories   = lazy(() => import('./pages/admin/AdminCategories'));
+const AdminOrganization = lazy(() => import('./pages/admin/AdminOrganization'));
+const AdminBilling      = lazy(() => import('./pages/admin/AdminBilling'));
+const AdminRoles        = lazy(() => import('./pages/admin/AdminRoles'));
+const AdminAuditLogs    = lazy(() => import('./pages/admin/AdminAuditLogs'));
+const SettingsPage      = lazy(() => import('./pages/SettingsPage'));
+const OnboardingPage    = lazy(() => import('./pages/OnboardingPage'));
+const TasksPage         = lazy(() => import('./pages/TasksPage'));
+const LeavesPage        = lazy(() => import('./pages/LeavesPage'));
+const GoalsPage         = lazy(() => import('./pages/GoalsPage'));
+const ActivityTimeline  = lazy(() => import('./pages/ActivityTimeline'));
+const MessagesPage      = lazy(() => import('./pages/MessagesPage'));
+const PerformancePage   = lazy(() => import('./pages/PerformancePage'));
+
+// Loading fallback
+const PageLoader = () => (
+  <div style={{ padding: 30 }}>
+    <SkeletonLoader type="card" count={3} />
+  </div>
+);
+
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
   if (loading) return (
-    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="spinner" />
+    <div style={{ padding: 30 }}>
+      <SkeletonLoader type="card" count={1} />
     </div>
   );
   if (!user) return <Navigate to="/login" replace />;
@@ -52,13 +70,14 @@ function DashboardRedirect() {
   return <Navigate to="/employee" replace />;
 }
 
-import DashboardLayout from './components/DashboardLayout';
-import { Outlet } from 'react-router-dom';
+
 
 function DashboardLayoutWrapper() {
   return (
     <DashboardLayout>
-      <Outlet />
+      <Suspense fallback={<PageLoader />}>
+        <Outlet />
+      </Suspense>
     </DashboardLayout>
   );
 }
@@ -82,11 +101,20 @@ function AppRoutes() {
             <ManagerDashboard />
           </ProtectedRoute>
         } />
-        <Route path="/manager/activity" element={<Navigate to="/manager" replace />} />
+        <Route path="/manager/activity" element={
+          <ProtectedRoute roles={['manager', 'admin']}>
+            <TeamActivity />
+          </ProtectedRoute>
+        } />
 
         <Route path="/manager/employee/:id" element={
           <ProtectedRoute roles={['manager', 'admin']}>
             <EmployeeDrilldown />
+          </ProtectedRoute>
+        } />
+        <Route path="/manager/employee/:id/activity" element={
+          <ProtectedRoute roles={['manager', 'admin']}>
+            <ActivityTimeline />
           </ProtectedRoute>
         } />
         <Route path="/manager/team/:id/activity" element={
@@ -187,8 +215,8 @@ function AppRoutes() {
         } />
       </Route>
 
-      {/* Catch-all */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* 404 Catch-all */}
+      <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFound /></Suspense>} />
       </Routes>
     </ErrorBoundary>
   );
@@ -199,7 +227,10 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <SocketProvider>
-          <ThemeProviderWrapper />
+          <ToastProvider>
+            <ThemeProviderWrapper />
+            <Toaster position="top-right" toastOptions={{ className: 'glass-toast', style: { background: '#1e293b', color: '#fff' } }} />
+          </ToastProvider>
         </SocketProvider>
       </AuthProvider>
     </BrowserRouter>

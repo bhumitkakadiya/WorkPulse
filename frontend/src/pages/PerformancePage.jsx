@@ -4,9 +4,10 @@ import HeaderActions from '../components/HeaderActions';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend, RadarChart, Radar,
-  PolarGrid, PolarAngleAxis, PolarRadiusAxis
+  PolarGrid, PolarAngleAxis, PolarRadiusAxis, Cell
 } from 'recharts';
-import { Users, TrendingUp, Clock, Zap, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Users, TrendingUp, Clock, Zap, RefreshCw, AlertTriangle, Download } from 'lucide-react';
+import StatCard from '../components/dashboard/StatCard';
 import './PerformancePage.css';
 
 function fmtSecs(s) {
@@ -54,11 +55,44 @@ export default function PerformancePage() {
     : 0;
   const onlineCount = team.filter(m => m.onlineStatus === 'online').length;
 
+  // Use actual avg active time from analytics data
+  const avgActiveStr = data?.avgActiveSecondsToday !== undefined 
+    ? fmtSecs(data.avgActiveSecondsToday) 
+    : '—';
+
   // Build per-member radar data from today's scores
   const radarData = team.slice(0, 6).map(m => ({
     name: m.name.split(' ')[0],
     score: m.todayScore || 0,
   }));
+
+  const deptData = {};
+  team.forEach(m => {
+    const dept = m.department || 'Unassigned';
+    if (!deptData[dept]) deptData[dept] = { name: dept, totalScore: 0, count: 0 };
+    if (m.todayScore != null) {
+      deptData[dept].totalScore += m.todayScore;
+      deptData[dept].count += 1;
+    }
+  });
+  const deptChartData = Object.values(deptData).map(d => ({
+    name: d.name,
+    avgScore: d.count > 0 ? Math.round(d.totalScore / d.count) : 0
+  }));
+
+  const handleExport = async () => {
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const res = await managerAPI.exportData(today);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `workpulse-analytics-${today}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (e) { console.error('Export failed', e); }
+  };
 
   return (
     <>
@@ -66,28 +100,23 @@ export default function PerformancePage() {
           <div>
             <div className="breadcrumbs">Team / Analytics</div>
             <h1>Team Analytics</h1>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <button className="btn btn-outline btn-sm" onClick={handleExport}><Download size={14}/> Export Report</button>
+            <HeaderActions />
           </div>
-          <HeaderActions />
         </div>
         <div className="page page-enter">
 
           {/* KPI row */}
-          <div className="grid-4" style={{ marginBottom: 24 }}>
+          <div className="admin-stats-row" style={{ marginBottom: 24 }}>
             {[
-              { label: 'Team Avg Score', value: `${avgScore}`, icon: TrendingUp, color: '#3B82F6', sub: 'Today' },
-              { label: 'Members Online', value: `${onlineCount}/${team.length}`, icon: Users, color: '#10B981', sub: 'Live' },
-              { label: 'Top App Usage', value: data?.topApps?.[0]?.appName?.split(' ')[0] || '—', icon: Zap, color: '#818CF8', sub: 'Most used today' },
-              { label: 'Avg Active', value: team.length ? '6h 12m' : '—', icon: Clock, color: '#F59E0B', sub: 'Estimated today' },
-            ].map(s => (
-              <div key={s.label} className="glass-panel card-3d" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ background: `${s.color}20`, color: s.color, padding: 12, borderRadius: 12 }}>
-                  <s.icon size={24} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 24, fontWeight: 'bold', color: s.color }}>{s.value}</div>
-                  <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>{s.label}</div>
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>{s.sub}</div>
-                </div>
+              { label: 'Team Avg Score', value: avgScore, icon: TrendingUp, iconClass: 'blue', borderClass: 'border-blue' },
+              { label: 'Members Online', value: `${onlineCount}/${team.length}`, icon: Users, iconClass: 'green', borderClass: 'border-green' },
+              { label: 'Top App', value: data?.topApps?.[0]?.appName?.split(' ')[0] || '—', icon: Zap, iconClass: 'purple', borderClass: 'border-purple' },
+              { label: 'Avg Active Time', value: avgActiveStr, icon: Clock, iconClass: 'amber', borderClass: 'border-amber' },
+            ].map((stat, i) => (
+              <div key={stat.label} className="animate-fade-in-up" style={{ animationDelay: `${i * 80}ms` }}>
+                <StatCard {...stat} />
               </div>
             ))}
           </div>
@@ -146,7 +175,7 @@ export default function PerformancePage() {
                   <Tooltip content={<CustomTooltip />} formatter={v => [fmtSecs(v), 'Duration']} />
                   <Bar dataKey="durationSeconds" name="Duration" radius={[4, 4, 0, 0]}>
                     {(data?.topApps || []).slice(0, 8).map((app, i) => (
-                      <rect key={i} fill={app.category === 'productive' ? '#10B981' : app.category === 'distracting' ? '#EF4444' : '#60A5FA'} />
+                      <Cell key={i} fill={app.category === 'productive' ? 'var(--success)' : app.category === 'distracting' ? 'var(--danger)' : 'var(--accent-primary)'} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -169,53 +198,68 @@ export default function PerformancePage() {
                   <PolarGrid stroke="var(--border)" />
                   <PolarAngleAxis dataKey="name" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
                   <PolarRadiusAxis domain={[0, 100]} tick={{ fill: 'var(--text-muted)', fontSize: 9 }} />
-                  <Radar name="Score" dataKey="score" stroke="#818CF8" fill="#818CF8" fillOpacity={0.2} strokeWidth={2} />
+                  <Radar name="Score" dataKey="score" stroke="var(--accent-primary)" fill="url(#areaGrad)" fillOpacity={0.6} strokeWidth={2} />
                   <Tooltip content={<CustomTooltip />} />
                 </RadarChart>
               </ResponsiveContainer>
             </div>
 
+            {/* Department Comparison */}
+            <div className="glass-panel" style={{ gridColumn: 'span 2' }}>
+              <div className="section-title" style={{ marginBottom: 16 }}>Department Comparison</div>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={deptChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                  <YAxis domain={[0, 100]} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="avgScore" name="Avg Score" fill="var(--accent-primary)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
             {/* Status table */}
-            <div className="glass-panel card-3d" style={{ gridColumn: 'span 2' }}>
-              <div className="section-title" style={{ marginBottom: 16 }}>Live Team Status</div>
-              <div className="table-wrapper">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Member</th>
-                      <th>Department</th>
-                      <th>Status</th>
-                      <th>Today's Score</th>
-                      <th>Score Bar</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {team.map(m => {
+            <div className="admin-table-card" style={{ gridColumn: 'span 3', padding: 0, overflowY: 'auto', maxHeight: 400 }}>
+              <div className="section-title" style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 11 }}>
+                Live Team Status
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead style={{ position: 'sticky', top: 58, zIndex: 10, background: 'var(--bg-secondary)' }}>
+                  <tr>
+                    <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Member</th>
+                    <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Department</th>
+                    <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Status</th>
+                    <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Today's Score</th>
+                    <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Score Bar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {team.map(m => {
                       const sc = m.todayScore ?? 0;
                       const color = sc >= 75 ? 'var(--success)' : sc >= 45 ? 'var(--warning)' : 'var(--danger)';
                       return (
-                        <tr key={m._id}>
-                          <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              <div className="analytics-avatar">{m.name.charAt(0)}</div>
-                              <span style={{ fontWeight: 600 }}>{m.name}</span>
+                        <tr key={m._id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                          <td style={{ padding: '16px 24px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                              <div className="user-avatar">{m.name.charAt(0)}</div>
+                              <span style={{ fontWeight: 600, color: 'var(--text)' }}>{m.name}</span>
                             </div>
                           </td>
-                          <td style={{ color: 'var(--text-secondary)' }}>{m.department || '—'}</td>
-                          <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span className={`status-dot status-dot-${m.onlineStatus}`} />
-                              <span style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'capitalize' }}>
+                          <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{m.department || '—'}</td>
+                          <td style={{ padding: '16px 24px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span className={`status-dot status-dot-${m.onlineStatus}`} style={{ width: 10, height: 10 }} />
+                              <span style={{ fontSize: 13, color: 'var(--text-secondary)', textTransform: 'capitalize' }}>
                                 {m.onlineStatus}
                               </span>
                             </div>
                           </td>
-                          <td>
-                            <span style={{ fontWeight: 700, color, fontSize: 18 }}>{m.todayScore ?? '—'}</span>
+                          <td style={{ padding: '16px 24px' }}>
+                            <span style={{ fontWeight: 700, color, fontSize: 16 }}>{m.todayScore ?? '—'}</span>
                           </td>
-                          <td style={{ width: 160 }}>
-                            <div className="score-bar-track">
-                              <div className="score-bar-fill" style={{ width: `${sc}%`, background: color }} />
+                          <td style={{ padding: '16px 24px', width: 200 }}>
+                            <div style={{ width: '100%', height: 6, background: 'var(--border-color)', borderRadius: 3, overflow: 'hidden' }}>
+                              <div style={{ width: `${sc}%`, height: '100%', background: color, borderRadius: 3 }} />
                             </div>
                           </td>
                         </tr>

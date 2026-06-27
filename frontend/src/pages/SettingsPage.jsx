@@ -14,9 +14,14 @@ export default function SettingsPage() {
   const [adminSettings, setAdminSettings] = useState(null);
   
   const [form, setForm] = useState({
-    theme: theme || 'system',
+    theme: theme || 'dark',
     notifications: user?.preferences?.notifications ?? true,
     emailDigest: user?.preferences?.emailDigest || 'weekly'
+  });
+
+  const [orgForm, setOrgForm] = useState({
+    idleThresholdMinutes: 30,
+    screenshotIntervalMinutes: 10,
   });
 
   useEffect(() => {
@@ -29,7 +34,12 @@ export default function SettingsPage() {
     try {
       if (user?.role === 'admin') {
         const res = await adminAPI.getSettings();
-        setAdminSettings(res.data.settings);
+        const s = res.data.settings;
+        setAdminSettings(s);
+        setOrgForm({
+          idleThresholdMinutes: s.idleTimeoutMinutes || 30,
+          screenshotIntervalMinutes: s.screenshotIntervalMinutes || 10,
+        });
       } else if (user?.role === 'employee') {
         const res = await employeeAPI.getSettings();
         setAdminSettings(res.data.settings);
@@ -43,11 +53,24 @@ export default function SettingsPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      await updatePreferences(form);
+      await updatePreferences({ ...form, theme: form.theme });
       setTheme(form.theme);
       alert('Settings saved successfully.');
     } catch {
       alert('Failed to save settings.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleOrgSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await adminAPI.updateSettings(orgForm);
+      alert('Organization settings saved.');
+    } catch {
+      alert('Failed to save organization settings.');
     } finally {
       setSaving(false);
     }
@@ -64,8 +87,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="page page-enter">
-        <form onSubmit={handleSave} className="settings-layout">
-          
+        <div className="settings-layout">
           {/* Sidebar */}
           <div className="settings-sidebar">
             <button type="button" className={`settings-nav-btn ${tab === 'profile' ? 'active' : ''}`} onClick={() => setTab('profile')}><User size={18} /> Profile</button>
@@ -180,24 +202,41 @@ export default function SettingsPage() {
                 )}
 
                 {user?.role === 'admin' && (
-                  <div className="org-rules-notice">
-                    <div className="input-group" style={{ marginBottom: 16, width: '100%' }}>
-                      <label className="input-label">Default Team Alert Threshold (Idle Time)</label>
-                      <select className="input">
-                        <option>15 minutes</option>
-                        <option>30 minutes</option>
-                        <option>1 hour</option>
-                      </select>
+                  <>
+                    <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>Configure monitoring and tracking settings for your organization</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                      <div className="input-group">
+                        <label className="input-label">Idle Timeout Threshold</label>
+                        <select
+                          className="input"
+                          value={orgForm.idleThresholdMinutes}
+                          onChange={e => setOrgForm(f => ({ ...f, idleThresholdMinutes: parseInt(e.target.value) }))}
+                        >
+                          <option value={15}>15 minutes</option>
+                          <option value={30}>30 minutes</option>
+                          <option value={60}>1 hour</option>
+                        </select>
+                      </div>
+                      <div className="input-group">
+                        <label className="input-label">Screenshot Capture Interval</label>
+                        <select
+                          className="input"
+                          value={orgForm.screenshotIntervalMinutes}
+                          onChange={e => setOrgForm(f => ({ ...f, screenshotIntervalMinutes: parseInt(e.target.value) }))}
+                        >
+                          <option value={5}>5 minutes</option>
+                          <option value={10}>10 minutes</option>
+                          <option value={20}>20 minutes</option>
+                        </select>
+                      </div>
+                      <div className="settings-footer">
+                        <button type="button" className="btn btn-primary" onClick={handleOrgSave} disabled={saving}>
+                          <Save size={16} />
+                          {saving ? 'Saving...' : 'Save Org Settings'}
+                        </button>
+                      </div>
                     </div>
-                    <div className="input-group" style={{ marginBottom: 0, width: '100%' }}>
-                      <label className="input-label">Screenshot Capture Interval</label>
-                      <select className="input">
-                        <option>5 minutes</option>
-                        <option>10 minutes</option>
-                        <option>20 minutes</option>
-                      </select>
-                    </div>
-                  </div>
+                  </>
                 )}
               </div>
             )}
@@ -205,14 +244,14 @@ export default function SettingsPage() {
             {/* Save Button */}
             {tab !== 'org' && (
               <div className="settings-footer">
-                <button type="submit" className="btn btn-primary" disabled={saving}>
+                <button type="button" className="btn btn-primary" onClick={handleSave} disabled={saving}>
                   <Save size={16} />
                   {saving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             )}
           </div>
-        </form>
+        </div>
       </div>
     </>
   );

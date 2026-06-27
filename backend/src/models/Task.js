@@ -18,6 +18,7 @@ const TaskSchema = new mongoose.Schema({
     message: { type: String, required: true },
     createdAt: { type: Date, default: Date.now }
   }],
+  labels: [{ type: String }],
   parentTask: { type: mongoose.Schema.Types.ObjectId, ref: 'Task', default: null },
   goalId: { type: mongoose.Schema.Types.ObjectId, ref: 'Goal', default: null }
 }, { timestamps: true });

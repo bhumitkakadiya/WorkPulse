@@ -43,30 +43,36 @@ async function computeAndSave(userId, date) {
     
     // Process App logs
     for (const log of appLogs) {
-      const cat = log.category !== 'neutral' ? log.category : categorize(log.appName, categoryRules);
-      if (cat === 'productive') productiveSeconds += log.durationSeconds;
-      else if (cat === 'distracting') distractingSeconds += log.durationSeconds;
-      else neutralSeconds += log.durationSeconds;
+      if (!log || !log.appName) continue;
+      const cat = log.category && log.category !== 'neutral' ? log.category : categorize(log.appName, categoryRules);
+      const duration = Number(log.durationSeconds) || 0;
+      
+      if (cat === 'productive') productiveSeconds += duration;
+      else if (cat === 'distracting') distractingSeconds += duration;
+      else neutralSeconds += duration;
 
       if (!appTotals[log.appName]) appTotals[log.appName] = { appName: log.appName, durationSeconds: 0, category: cat };
-      appTotals[log.appName].durationSeconds += log.durationSeconds;
+      appTotals[log.appName].durationSeconds += duration;
     }
 
     // Process Website logs
     for (const log of websiteLogs) {
-      const cat = log.category !== 'neutral' ? log.category : categorize(log.domain, categoryRules);
-      if (cat === 'productive') productiveSeconds += log.durationSeconds;
-      else if (cat === 'distracting') distractingSeconds += log.durationSeconds;
-      else neutralSeconds += log.durationSeconds;
+      if (!log || !log.domain) continue;
+      const cat = log.category && log.category !== 'neutral' ? log.category : categorize(log.domain, categoryRules);
+      const duration = Number(log.durationSeconds) || 0;
+
+      if (cat === 'productive') productiveSeconds += duration;
+      else if (cat === 'distracting') distractingSeconds += duration;
+      else neutralSeconds += duration;
 
       const name = log.domain;
       if (!appTotals[name]) appTotals[name] = { appName: name, durationSeconds: 0, category: cat };
-      appTotals[name].durationSeconds += log.durationSeconds;
+      appTotals[name].durationSeconds += duration;
     }
 
-    const totalActiveSeconds = sessions.filter(s => s.type === 'active').reduce((a, s) => a + (s.durationSeconds || 0), 0);
-    const totalIdleSeconds = sessions.filter(s => s.type === 'idle').reduce((a, s) => a + (s.durationSeconds || 0), 0);
-    const focusSessionSeconds = sessions.filter(s => s.isFocusSession).reduce((a, s) => a + (s.durationSeconds || 0), 0);
+    const totalActiveSeconds = sessions.filter(s => s && s.type === 'active').reduce((a, s) => a + (Number(s.durationSeconds) || 0), 0);
+    const totalIdleSeconds = sessions.filter(s => s && s.type === 'idle').reduce((a, s) => a + (Number(s.durationSeconds) || 0), 0);
+    const focusSessionSeconds = sessions.filter(s => s && s.isFocusSession).reduce((a, s) => a + (Number(s.durationSeconds) || 0), 0);
     const trackedSeconds = productiveSeconds + neutralSeconds + distractingSeconds;
 
     let score = 0;

@@ -21,7 +21,7 @@ router.get('/my', hasPermission(PERMISSIONS.VIEW_OWN_DATA), async (req, res) => 
     const attendance = await Attendance.find(query).sort({ date: -1 });
     res.json({ success: true, attendance });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -41,7 +41,7 @@ router.get('/team', hasPermission(PERMISSIONS.VIEW_TEAM_DATA), async (req, res) 
     const attendance = await Attendance.find(query).populate('userId', 'name email avatar department');
     res.json({ success: true, attendance });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 

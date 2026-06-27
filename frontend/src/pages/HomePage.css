@@ -37,6 +37,8 @@
   filter: blur(120px);
   opacity: 0.35;
   mix-blend-mode: screen;
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 [data-theme='light'] .mesh-blob { 
   opacity: 0.25; 

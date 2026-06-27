@@ -59,7 +59,7 @@ router.post('/register', async (req, res) => {
 
     res.status(201).json({ success: true, token, user: { id: user._id, name: user.name, email: user.email, role: user.role, jobTitle: user.jobTitle, isActive: user.isActive } });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -86,19 +86,16 @@ router.post('/login', async (req, res) => {
     const token = user.getSignedJwtToken();
     let effectivePermissions = [];
     if (user.roleId) {
-      const Role = require('../models/Role');
-      const authMiddleware = require('../middleware/auth');
-      // We can't easily import the unexported helper from auth.js here unless we export it
-      // Let's just set effectivePermissions to empty for login, or we can fetch them via a GET /me right after login on the frontend
-      // Wait, let's just make the frontend call /me after login, or export getEffectivePermissions from auth.js
+      const { getEffectivePermissions } = require('../middleware/auth');
+      effectivePermissions = await getEffectivePermissions(user.roleId);
     }
     res.json({
       success: true, token,
       user: { id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar, department: user.department, preferences: user.preferences },
-      // effectivePermissions will be fetched by fetchMe() on the frontend right after login due to token change
+      effectivePermissions,
     });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 

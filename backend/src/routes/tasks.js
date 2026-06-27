@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
     res.json({ success: true, tasks });
   } catch (err) {
     console.error(`[TASKS GET] Error:`, err);
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -63,7 +63,7 @@ router.get('/:id', async (req, res) => {
     }
     res.json({ success: true, task });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -87,6 +87,7 @@ router.post('/', hasPermission(PERMISSIONS.VIEW_TEAM_DATA), async (req, res) => 
       assignedTo,
       priority,
       dueDate,
+      labels: req.body.labels || [],
       parentTask: parentTask || null
     });
     
@@ -94,7 +95,7 @@ router.post('/', hasPermission(PERMISSIONS.VIEW_TEAM_DATA), async (req, res) => 
     
     res.status(201).json({ success: true, task });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -121,7 +122,35 @@ router.patch('/:id/status', async (req, res) => {
     
     res.json({ success: true, task });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    throw err;
+  }
+});
+
+// PUT /api/tasks/:id
+router.put('/:id', async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
+    
+    const isAssignee = task.assignedTo.toString() === req.user.id;
+    const isAssigner = task.assignedBy.toString() === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+    
+    if (!isAssignee && !isAssigner && !isAdmin) {
+      return res.status(403).json({ success: false, message: 'Not authorized to update this task' });
+    }
+    
+    const updatableFields = ['title', 'description', 'priority', 'dueDate', 'labels', 'status'];
+    updatableFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        task[field] = req.body[field];
+      }
+    });
+    
+    await task.save();
+    res.json({ success: true, task });
+  } catch (err) {
+    throw err;
   }
 });
 
@@ -149,7 +178,7 @@ router.post('/:id/notes', async (req, res) => {
     
     res.json({ success: true, task });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -170,7 +199,7 @@ router.delete('/:id', async (req, res) => {
     await Task.deleteOne({ _id: task._id });
     res.json({ success: true, message: 'Task deleted successfully' });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    throw err;
   }
 });
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { managerAPI } from '../api/index.js';
 import axios from 'axios';
+import SkeletonLoader from './SkeletonLoader';
 import { Bell, CheckCircle, AlertTriangle, Info, Clock, HeartPulse, BarChart2 } from 'lucide-react';
 import './dashboard/dashboard-shared.css';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
@@ -13,6 +14,11 @@ function timeAgo(dt) {
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
+}
+function getAlertSeverityColor(alert) {
+  if (alert.title?.toLowerCase().includes('idle') || alert.title?.toLowerCase().includes('offline')) return 'var(--warning)';
+  if (alert.title?.toLowerCase().includes('score') || alert.title?.toLowerCase().includes('low')) return 'var(--danger)';
+  return 'var(--accent-primary)';
 }
 
 export default function ManagerAlerts() {
@@ -61,7 +67,11 @@ export default function ManagerAlerts() {
   const flagCount = burnoutFlags.length;
 
   if (loading) {
-    return <div className="loading-center" style={{ height: 150 }}><div className="spinner" /></div>;
+    return (
+      <div style={{ padding: '20px' }}>
+        <SkeletonLoader type="card" count={1} />
+      </div>
+    );
   }
 
   const chartData = pulseResults.map(r => ({
@@ -101,8 +111,8 @@ export default function ManagerAlerts() {
             <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No active alerts for your team.</div>
           ) : (
             alerts.slice(0, 10).map(alert => (
-              <div key={alert._id} className="admin-alert-item" style={{ opacity: alert.isRead ? 0.6 : 1 }}>
-                <div className="admin-alert-dot" style={{ background: alert.isRead ? 'var(--text-muted)' : 'var(--danger)' }} />
+              <div key={alert._id} className="admin-alert-item group" style={{ opacity: alert.isRead ? 0.6 : 1, borderLeft: `3px solid ${getAlertSeverityColor(alert)}`, position: 'relative' }}>
+                <div className="admin-alert-dot" style={{ background: alert.isRead ? 'var(--text-muted)' : getAlertSeverityColor(alert) }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="admin-alert-title">
                     {alert.employeeId?.name ? <span style={{ fontWeight: 600 }}>{alert.employeeId.name}: </span> : ''}
@@ -112,7 +122,7 @@ export default function ManagerAlerts() {
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{timeAgo(alert.createdAt)}</div>
                 </div>
                 {!alert.isRead && (
-                  <button className="btn btn-ghost btn-icon btn-sm" onClick={() => handleMarkRead(alert._id)} title="Mark as read">
+                  <button className="btn btn-ghost btn-icon btn-sm alert-dismiss-btn" style={{ position: 'absolute', right: 12, top: 12, opacity: 0, transition: 'opacity 0.2s' }} onClick={() => handleMarkRead(alert._id)} title="Dismiss">
                     <CheckCircle size={16} />
                   </button>
                 )}
@@ -143,7 +153,10 @@ export default function ManagerAlerts() {
                           ))}
                         </div>
                       </div>
-                      <button className="btn btn-primary btn-sm" onClick={() => handleAcknowledgeFlag(flag._id)}>Acknowledge</button>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <button className="btn btn-primary btn-sm" onClick={() => handleAcknowledgeFlag(flag._id)}>Acknowledge</button>
+                        <a href={`/messages?user=${flag.userId?._id}`} className="btn btn-outline btn-sm">Check In</a>
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -106,8 +106,69 @@ router.get('/team/analytics', async (req, res) => {
     appTotals[l.appName].durationSeconds += l.durationSeconds;
   });
   const topApps = Object.values(appTotals).sort((a, b) => b.durationSeconds - a.durationSeconds).slice(0, 10);
+  
+  const totalActiveSeconds = Object.values(appTotals).reduce((sum, app) => sum + app.durationSeconds, 0);
+  const avgActiveSecondsToday = ids.length ? Math.round(totalActiveSeconds / ids.length) : 0;
 
-  res.json({ success: true, trendData, topApps, memberCount: ids.length });
+  res.json({ success: true, trendData, topApps, memberCount: ids.length, avgActiveSecondsToday });
+});
+
+// @route  GET /api/manager/team/activity
+// Get hour-by-hour activity grid for the team
+router.get('/team/activity', async (req, res) => {
+  const query = req.user.role === 'admin'
+    ? { isActive: true, role: { $ne: 'admin' } }
+    : { isActive: true, managerId: req.user.id };
+  const members = await User.find(query).select('_id name role department');
+  const ids = members.map(m => m._id);
+
+  const date = req.query.date || new Date().toISOString().slice(0, 10);
+  const sessions = await ActivitySession.find({ userId: { $in: ids }, date });
+  
+  const activityData = members.map(m => {
+    const userSessions = sessions.filter(s => s.userId.toString() === m._id.toString());
+    const hours = {};
+    for (let i = 0; i < 24; i++) {
+      hours[i] = { score: null, apps: [] };
+    }
+    
+    userSessions.forEach(s => {
+      const startTime = new Date(s.startTime);
+      const hour = startTime.getHours();
+      
+      const existing = hours[hour].apps.find(a => a.name === s.appName);
+      if (existing) {
+        existing.duration += (s.durationSeconds || 0);
+      } else if (s.appName) {
+        hours[hour].apps.push({ name: s.appName, category: s.category || 'neutral', duration: s.durationSeconds || 0 });
+      }
+    });
+
+    let totalProductiveSeconds = 0;
+
+    for (let i = 0; i < 24; i++) {
+      if (hours[i].apps.length > 0) {
+        hours[i].apps.sort((a, b) => b.duration - a.duration);
+        const total = hours[i].apps.reduce((sum, a) => sum + a.duration, 0);
+        let scoreSum = 0;
+        hours[i].apps.forEach(a => {
+           let appScore = 50;
+           if (a.category === 'productive') { appScore = 100; totalProductiveSeconds += a.duration; }
+           else if (a.category === 'distracting') appScore = 0;
+           scoreSum += appScore * (a.duration / total);
+        });
+        hours[i].score = Math.round(scoreSum);
+      }
+    }
+
+    return {
+      user: m,
+      totalProductiveHours: (totalProductiveSeconds / 3600).toFixed(1),
+      hours
+    };
+  });
+
+  res.json({ success: true, date, activityData });
 });
 
 // @route  GET /api/manager/export

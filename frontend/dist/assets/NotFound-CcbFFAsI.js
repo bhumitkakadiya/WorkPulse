@@ -1,0 +1,6 @@
+import{d as t,j as e,s as a,L as o}from"./index-Db_Qkjl7.js";import{P as r}from"./PageHeader-B-nVZBZe.js";import"./HeaderActions-C_ViNsfW.js";import"./download-TxAQDe69.js";/**
+ * @license lucide-react v0.400.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const s=t("House",[["path",{d:"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8",key:"5wwlr5"}],["path",{d:"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",key:"1d0kgt"}]]);function d(){return e.jsxs(e.Fragment,{children:[e.jsx(r,{breadcrumbs:"Error",title:"404 Not Found"}),e.jsxs("div",{className:"page page-enter",style:{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"60vh",textAlign:"center"},children:[e.jsx(a,{size:64,style:{color:"var(--warning)",marginBottom:24}}),e.jsx("h2",{style:{fontSize:32,marginBottom:16},children:"Page Not Found"}),e.jsx("p",{style:{fontSize:16,color:"var(--text-muted)",maxWidth:400,marginBottom:32},children:"The page you are looking for doesn't exist or you don't have permission to access it."}),e.jsxs(o,{to:"/",className:"btn btn-primary",style:{display:"inline-flex",alignItems:"center",gap:8},children:[e.jsx(s,{size:18})," Back to Dashboard"]})]})]})}export{d as default};

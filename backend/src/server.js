@@ -34,6 +34,8 @@ const insightEngine = require('./services/insightEngine');
 const http = require('http');
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
+const Message = require('./models/Message');
+const Conversation = require('./models/Conversation');
 
 const app = express();
 const server = http.createServer(app);
@@ -71,8 +73,6 @@ io.use((socket, next) => {
 
   // Basic message sending via socket (persistence handled in REST or here)
   socket.on('message:send', async (data) => {
-    const Message = require('./models/Message');
-    const Conversation = require('./models/Conversation');
     try {
       const convo = await Conversation.findById(data.conversationId);
       if (!convo || !convo.participantIds.includes(socket.user.id)) return;
@@ -98,14 +98,13 @@ io.use((socket, next) => {
   });
 
   socket.on('message:read', async (data) => {
-    const Message = require('./models/Message');
     try {
       await Message.updateMany(
         { conversationId: data.conversationId, readBy: { $ne: socket.user.id } },
         { $push: { readBy: socket.user.id } }
       );
       // Let other participants know messages were read
-      const convo = await require('./models/Conversation').findById(data.conversationId);
+      const convo = await Conversation.findById(data.conversationId);
       if (convo) {
         convo.participantIds.forEach(pid => {
           if (pid.toString() !== socket.user.id) {
@@ -128,6 +127,18 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
 }));
+
+// Rate limiting for auth endpoints
+const rateLimit = (() => {
+  try { return require('express-rate-limit'); } catch { return null; }
+})();
+if (rateLimit) {
+  app.use('/api/auth/login', rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20,
+    message: { success: false, message: 'Too many login attempts. Please try again in 15 minutes.' },
+  }));
+}
 app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));

@@ -12,7 +12,7 @@ router.get('/my-insights', hasPermission(PERMISSIONS.VIEW_OWN_DATA), async (req,
     const insights = await AIInsight.find({ userId: req.user.id }).sort({ weekStartDate: -1 }).limit(4);
     res.json({ success: true, insights });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -29,7 +29,7 @@ router.get('/team-insights', hasPermission(PERMISSIONS.VIEW_TEAM_DATA), async (r
     const insights = await AIInsight.find({ weekStartDate: weekStart }).populate('userId', 'name avatar department');
     res.json({ success: true, insights });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 

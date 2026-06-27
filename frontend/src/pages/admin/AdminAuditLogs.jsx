@@ -3,9 +3,10 @@ import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { Search, Filter, Clock, User, HardDrive, RefreshCw } from 'lucide-react';
 import PageHeader from '../../components/dashboard/PageHeader';
+import SkeletonLoader from '../../components/SkeletonLoader';
 
 export default function AdminAuditLogs() {
-  const { effectivePermissions } = useAuth();
+  const { effectivePermissions, user } = useAuth();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -58,7 +59,35 @@ export default function AdminAuditLogs() {
     }
   };
 
-  if (!effectivePermissions.includes('MANAGE_SYSTEM_SETTINGS') && !effectivePermissions.includes('MANAGE_USERS')) {
+  const getSeverityBadge = (action) => {
+    // Generate severity based on action if backend doesn't provide it
+    let severity = 'Low';
+    let color = '#64748B'; // Gray/Blue
+    let bg = 'rgba(100, 116, 139, 0.1)';
+    
+    if (action === 'DELETE') { severity = 'High'; color = '#EF4444'; bg = 'rgba(239,68,68,0.1)'; }
+    else if (action === 'UPDATE') { severity = 'Medium'; color = '#F59E0B'; bg = 'rgba(245,158,11,0.1)'; }
+    else if (action === 'CREATE') { severity = 'Low'; color = '#3B82F6'; bg = 'rgba(59,130,246,0.1)'; }
+    
+    return <span style={{ fontSize: 11, fontWeight: 600, padding: '4px 8px', borderRadius: 4, background: bg, color }}>{severity}</span>;
+  };
+
+
+
+  // Allow admin role directly + graceful wait if permissions not loaded yet
+  const canView = user?.role === 'admin' || 
+    effectivePermissions.includes('MANAGE_SYSTEM_SETTINGS') || 
+    effectivePermissions.includes('MANAGE_USERS');
+
+  if (!user || loading && logs.length === 0) {
+    return (
+      <div style={{ padding: 40 }}>
+        <SkeletonLoader type="table" count={10} />
+      </div>
+    );
+  }
+  
+  if (!canView) {
     return (
       <>
         <div style={{ padding: 40, textAlign: 'center' }}>You do not have permission to view audit logs.</div>
@@ -113,20 +142,29 @@ export default function AdminAuditLogs() {
                 <tr>
                   <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 12, color: 'var(--text-muted)' }}>Timestamp</th>
                   <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 12, color: 'var(--text-muted)' }}>Action</th>
+                  <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 12, color: 'var(--text-muted)' }}>Severity</th>
                   <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 12, color: 'var(--text-muted)' }}>Resource</th>
                   <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 12, color: 'var(--text-muted)' }}>Performed By</th>
                   <th style={{ padding: '12px 24px', textAlign: 'right', fontSize: 12, color: 'var(--text-muted)' }}>Details</th>
                 </tr>
               </thead>
               <tbody>
-                {loading && logs.length === 0 ? (
-                  <tr><td colSpan="5" style={{ padding: 40, textAlign: 'center' }}><div className="spinner" style={{ margin: '0 auto' }} /></td></tr>
-                ) : logs.length === 0 ? (
-                  <tr><td colSpan="5" style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>No audit logs found.</td></tr>
+                {loading && logs.length > 0 && (
+                  <tr>
+                    <td colSpan="6" style={{ padding: '16px 24px' }}>
+                      <SkeletonLoader type="table-row" count={1} />
+                    </td>
+                  </tr>
+                )}
+                {logs.length === 0 && !loading ? (
+                  <tr><td colSpan="6" style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>No audit logs found.</td></tr>
                 ) : (
                   logs.map(log => (
                     <React.Fragment key={log._id}>
-                      <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
+                      <tr 
+                        style={{ borderBottom: '1px solid var(--border-light)', cursor: 'pointer' }}
+                        onClick={() => setExpandedLogId(expandedLogId === log._id ? null : log._id)}
+                      >
                         <td style={{ padding: '16px 24px', fontSize: 13, color: 'var(--text)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Clock size={14} color="var(--text-muted)" /> {new Date(log.createdAt).toLocaleString()}</div>
                         </td>
@@ -134,6 +172,9 @@ export default function AdminAuditLogs() {
                           <span style={{ fontSize: 11, fontWeight: 600, padding: '4px 8px', borderRadius: 4, background: getActionColor(log.action) + '20', color: getActionColor(log.action) }}>
                             {log.action}
                           </span>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          {getSeverityBadge(log.action)}
                         </td>
                         <td style={{ padding: '16px 24px', fontSize: 13 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><HardDrive size={14} color="var(--text-muted)" /> {log.targetResource || 'System'}</div>
@@ -148,7 +189,7 @@ export default function AdminAuditLogs() {
                         <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                           <button 
                             className="btn btn-ghost btn-sm" 
-                            onClick={() => setExpandedLogId(expandedLogId === log._id ? null : log._id)}
+                            onClick={(e) => { e.stopPropagation(); setExpandedLogId(expandedLogId === log._id ? null : log._id); }}
                           >
                             {expandedLogId === log._id ? 'Hide Details' : 'View JSON'}
                           </button>
@@ -156,7 +197,7 @@ export default function AdminAuditLogs() {
                       </tr>
                       {expandedLogId === log._id && (
                         <tr style={{ background: 'var(--surface-50)' }}>
-                          <td colSpan="5" style={{ padding: '16px 24px' }}>
+                          <td colSpan="6" style={{ padding: '16px 24px' }}>
                             <div style={{ display: 'flex', gap: 24 }}>
                               <div style={{ flex: 1 }}>
                                 <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8, fontWeight: 600 }}>Payload Details</div>

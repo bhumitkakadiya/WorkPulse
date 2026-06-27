@@ -99,6 +99,15 @@
   opacity: 0.5;
 }
 
+/* Phase 7: Mobile Kanban */
+@media (max-width: 768px) {
+  .kanban-board {
+    flex-direction: column;
+    overflow-x: visible;
+    overflow-y: auto;
+  }
+}
+
 [data-theme='light'] .task-card:hover {
   border-color: var(--brand-primary);
 }

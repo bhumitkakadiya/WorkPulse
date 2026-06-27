@@ -7,7 +7,7 @@ const Goal = require('../models/Goal');
 router.use(protect);
 
 // Get all goals (for simplicity, filtering by visibility could be added later)
-router.get('/', hasPermission(PERMISSIONS.VIEW_TEAM_DATA), async (req, res) => {
+router.get('/', hasPermission(PERMISSIONS.VIEW_OWN_DATA), async (req, res) => {
   try {
     // If not admin, maybe restrict to their org or team. For now, fetch all goals visible to user.
     // Assuming simple flat view or cascading view in frontend
@@ -26,14 +26,14 @@ router.get('/', hasPermission(PERMISSIONS.VIEW_TEAM_DATA), async (req, res) => {
     const goals = await Goal.find(query).populate('ownerId', 'name avatar department').sort({ createdAt: -1 });
     res.json({ success: true, goals });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
 // Create a goal
 router.post('/', hasPermission(PERMISSIONS.MANAGE_DEPARTMENTS), async (req, res) => {
   try {
-    const { title, description, type, ownerId, parentGoalId, targetDate } = req.body;
+    const { title, description, type, ownerId, parentGoalId, targetDate, keyResults } = req.body;
     
     const newGoal = await Goal.create({
       title,
@@ -41,12 +41,13 @@ router.post('/', hasPermission(PERMISSIONS.MANAGE_DEPARTMENTS), async (req, res)
       type,
       ownerId: ownerId || req.user.id,
       parentGoalId,
-      targetDate
+      targetDate,
+      keyResults: keyResults || []
     });
     
     res.status(201).json({ success: true, goal: newGoal });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 
@@ -61,19 +62,27 @@ router.put('/:id', hasPermission(PERMISSIONS.VIEW_OWN_DATA), async (req, res) =>
       return res.status(403).json({ success: false, message: 'Not authorized to update this goal' });
     }
     
-    if (req.body.progressPercent !== undefined) {
-      goal.progressPercent = req.body.progressPercent;
-      if (goal.progressPercent >= 100) goal.status = 'completed';
-      else if (goal.status === 'completed') goal.status = 'on_track';
-    }
-    
     if (req.body.status) goal.status = req.body.status;
+    if (req.body.progressPercent !== undefined) goal.progressPercent = req.body.progressPercent;
+    if (req.body.keyResults !== undefined) {
+      goal.keyResults = req.body.keyResults;
+      // Calculate overall progress from key results if any exist
+      if (goal.keyResults.length > 0) {
+        let total = 0;
+        goal.keyResults.forEach(kr => {
+          if (kr.target > 0) {
+            total += Math.min(100, Math.max(0, (kr.current / kr.target) * 100));
+          }
+        });
+        goal.progressPercent = Math.round(total / goal.keyResults.length);
+      }
+    }
     
     await goal.save();
     
     res.json({ success: true, goal });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    throw err;
   }
 });
 

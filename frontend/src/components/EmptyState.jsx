@@ -1,24 +1,17 @@
 import React from 'react';
 import './EmptyState.css';
 
-export default function EmptyState({ icon: Icon, title, message, action, actionLabel }) {
+export default function EmptyState({ icon: Icon, title, description, actionLabel, onAction }) {
   return (
     <div className="empty-state-container">
-      {/* Pulse waveform background signature */}
-      <div className="pulse-bg-wrapper">
-        <svg className="pulse-line" viewBox="0 0 100 20" preserveAspectRatio="none">
-          <path d="M0,10 L30,10 L35,2 L40,18 L45,10 L100,10" fill="none" stroke="currentColor" strokeWidth="0.5" />
-        </svg>
-      </div>
-      
       <div className="empty-state-content">
         <div className="empty-state-icon">
-          {Icon && <Icon size={32} />}
+          {typeof Icon === 'function' || typeof Icon === 'object' ? <Icon size={40} /> : <span>{Icon}</span>}
         </div>
         <h3 className="empty-state-title">{title}</h3>
-        <p className="empty-state-message">{message}</p>
-        {action && actionLabel && (
-          <button className="btn btn-primary empty-state-action" onClick={action}>
+        {description && <p className="empty-state-message">{description}</p>}
+        {actionLabel && onAction && (
+          <button className="btn btn-primary empty-state-action" onClick={onAction}>
             {actionLabel}
           </button>
         )}
