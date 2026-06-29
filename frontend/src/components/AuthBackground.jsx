@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Activity, Clock, Users, Sparkles, Sun, Moon } from 'lucide-react';
+import { Activity, Clock, Users, Sparkles, Sun, Moon, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Logo from './Logo';
 import { useTheme } from '../contexts/ThemeContext';
@@ -97,6 +97,13 @@ export default function AuthBackground({ children }) {
 
       {/* Form Content Layer */}
       <div className="auth-content-layer">
+        <Link 
+          to="/" 
+          style={{ position: 'absolute', top: 24, left: 24, background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', cursor: 'pointer', padding: 8, color: 'var(--text-body)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, borderRadius: '50%', boxShadow: 'var(--shadow-card)' }}
+          title="Go to Homepage"
+        >
+          <Home size={20} />
+        </Link>
         <button 
           onClick={toggleTheme} 
           style={{ position: 'absolute', top: 24, right: 24, background: 'transparent', border: 'none', cursor: 'pointer', padding: 8, color: 'var(--text-body)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}

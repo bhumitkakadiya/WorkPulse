@@ -100,11 +100,7 @@ export default function Login() {
             onClick={() => quickLogin(u)}
             disabled={loading}
           >
-            {loading && activeRole === u.role ? (
-              <><Loader size={13} className="spin-icon" style={{ marginRight: 4 }} /> Logging in as {u.label}...</>
-            ) : (
-              u.label
-            )}
+            {u.label}
           </button>
         ))}
       </div>

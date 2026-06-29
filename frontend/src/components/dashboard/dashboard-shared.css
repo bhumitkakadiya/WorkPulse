@@ -448,8 +448,6 @@
   background-color: var(--bg-page);
   color: var(--text);
   min-height: 100vh;
-  margin: -30px; /* Counteract default main-content padding */
-  padding: 30px;
 }
 
 [data-theme='light'] .admin-dashboard-override {
@@ -571,8 +569,6 @@
   background-color: var(--bg-page);
   color: var(--text);
   min-height: 100vh;
-  margin: -30px; /* Counteract default main-content padding */
-  padding: 30px;
 }
 [data-theme='light'] .admin-users-override {
   /* Light Mode Overrides */

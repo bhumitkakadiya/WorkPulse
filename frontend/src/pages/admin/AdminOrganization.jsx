@@ -89,6 +89,7 @@ export default function AdminOrganization() {
               </div>
               <select className="input" style={{ maxWidth: 220 }} value={form.screenshotIntervalMinutes}
                 onChange={e => setForm(p => ({ ...p, screenshotIntervalMinutes: Number(e.target.value) }))}>
+                <option value={0}>Random Intervals</option>
                 <option value={10}>Every 10 minutes</option>
                 <option value={20}>Every 20 minutes</option>
                 <option value={30}>Every 30 minutes</option>

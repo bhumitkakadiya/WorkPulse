@@ -41,6 +41,12 @@
   --transition-base: 250ms ease;
   --transition-slow: 400ms ease;
 
+  --space-2: 8px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
   /* Legacy Fallbacks to prevent breaking old code */
   --bg-primary: var(--color-bg-page);
   --bg-secondary: var(--color-bg-card);
@@ -256,7 +262,7 @@ body::before {
 
 [data-theme='light'] .glass-panel {
   background: var(--bg-surface);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-border);
   box-shadow: var(--shadow);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -365,7 +371,7 @@ body::before {
   color: var(--brand-primary);
 }
 [data-theme='light'] .btn-outline {
-  border-color: var(--border-color);
+  border-color: var(--color-border);
   color: var(--text-heading);
 }
 [data-theme='light'] .btn-outline:hover {
@@ -649,7 +655,7 @@ td {
 }
 [data-theme='light'] .sidebar {
   background: #FFFFFF;
-  border-right-color: var(--border-color);
+  border-right-color: var(--color-border);
   backdrop-filter: none;
   box-shadow: 2px 0 12px rgba(15,23,42,0.06);
 }
@@ -812,10 +818,10 @@ input[type=range]::-webkit-slider-thumb:active {
   border-top: 1px solid var(--border-light);
 }
 [data-theme='light'] .sidebar-header {
-  border-bottom-color: var(--border-color);
+  border-bottom-color: var(--color-border);
 }
 [data-theme='light'] .sidebar-footer {
-  border-top-color: var(--border-color);
+  border-top-color: var(--color-border);
 }
 [data-theme='light'] .nav-item {
   color: var(--text-body);

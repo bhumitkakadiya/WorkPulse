@@ -100,6 +100,7 @@ export default function PerformancePage() {
           <div>
             <div className="breadcrumbs">Team / Analytics</div>
             <h1>Team Analytics</h1>
+          </div>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
             <button className="btn btn-outline btn-sm" onClick={handleExport}><Download size={14}/> Export Report</button>
             <HeaderActions />
@@ -270,7 +271,6 @@ export default function PerformancePage() {
               </div>
             </div>
           </div>
-        </div>
       </>
   );
 }

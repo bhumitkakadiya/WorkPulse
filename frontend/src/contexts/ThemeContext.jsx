@@ -50,7 +50,9 @@ export function ThemeProvider({ children }) {
   const toggleTheme = async () => {
     const next = (theme === 'dark' || activeTheme === 'dark') ? 'light' : 'dark';
     applyTheme(next);
-    try { await updatePreferences({ theme: next }); } catch {}
+    if (user) {
+      try { await updatePreferences({ theme: next }); } catch {}
+    }
   };
 
   return (

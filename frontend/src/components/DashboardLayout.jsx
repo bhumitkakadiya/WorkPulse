@@ -52,7 +52,7 @@ export default function DashboardLayout({ children }) {
       {/* Main Content Area */}
       <div className="main-content" style={{ padding: 0, display: 'flex', flexDirection: 'column' }}>
         <TopBar />
-        <div style={{ padding: '30px', flex: 1, overflowY: 'auto' }}>
+        <div style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
           {children}
         </div>
       </div>

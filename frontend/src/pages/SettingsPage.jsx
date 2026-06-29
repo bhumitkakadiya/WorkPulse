@@ -192,7 +192,10 @@ export default function SettingsPage() {
                         {adminSettings ? (
                           <>
                             Your organization tracks idle time after <b>{adminSettings.idleTimeoutMinutes} minutes</b> of inactivity. 
-                            Screenshots are captured every <b>{adminSettings.screenshotIntervalMinutes} minutes</b>. 
+                            {adminSettings.screenshotIntervalMinutes === 0 
+                              ? ' Screenshots are captured at random intervals. '
+                              : <> Screenshots are captured every <b>{adminSettings.screenshotIntervalMinutes} minutes</b>. </>
+                            }
                             Data is retained for <b>{adminSettings.retentionDays} days</b>.
                           </>
                         ) : 'Loading organization settings...'}
@@ -224,6 +227,7 @@ export default function SettingsPage() {
                           value={orgForm.screenshotIntervalMinutes}
                           onChange={e => setOrgForm(f => ({ ...f, screenshotIntervalMinutes: parseInt(e.target.value) }))}
                         >
+                          <option value={0}>Random Intervals</option>
                           <option value={5}>5 minutes</option>
                           <option value={10}>10 minutes</option>
                           <option value={20}>20 minutes</option>

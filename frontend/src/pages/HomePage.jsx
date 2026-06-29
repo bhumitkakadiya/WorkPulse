@@ -58,13 +58,13 @@ export default function HomePage() {
                   <LogOut size={16} />
                   Logout
                 </button>
-                <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '18px', fontWeight: 'bold', userSelect: 'none' }}>|</span>
+                <span style={{ color: 'var(--color-border-strong)', fontSize: '18px', fontWeight: 'bold', userSelect: 'none' }}>|</span>
                 <button className="btn btn-primary" onClick={handleAction}>Go to Dashboard</button>
               </>
             ) : (
               <>
                 <Link to="/login" className="nav-link-hover" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontWeight: 500, padding: '0 4px' }}>Login</Link>
-                <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '18px', fontWeight: 'bold', userSelect: 'none' }}>|</span>
+                <span style={{ color: 'var(--color-border-strong)', fontSize: '18px', fontWeight: 'bold', userSelect: 'none' }}>|</span>
                 <Link to="/login" className="btn btn-primary" style={{ transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)' }}>Sign Up</Link>
               </>
             )}
