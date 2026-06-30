@@ -1,1 +1,0 @@
-import{j as e}from"./index-Db_Qkjl7.js";import{H as a}from"./HeaderActions-C_ViNsfW.js";function n({breadcrumbs:s,title:r}){return e.jsxs("div",{className:"page-header",children:[e.jsxs("div",{children:[s&&e.jsx("div",{className:"breadcrumbs",children:s}),e.jsx("h1",{children:r})]}),e.jsx(a,{})]})}export{n as P};

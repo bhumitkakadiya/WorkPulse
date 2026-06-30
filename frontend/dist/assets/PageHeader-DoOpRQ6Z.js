@@ -1,0 +1,1 @@
+import{j as e}from"./index-dixyafyA.js";import{H as a}from"./HeaderActions-CdlQJhwK.js";function n({breadcrumbs:s,title:r}){return e.jsxs("div",{className:"page-header",children:[e.jsxs("div",{children:[s&&e.jsx("div",{className:"breadcrumbs",children:s}),e.jsx("h1",{children:r})]}),e.jsx(a,{})]})}export{n as P};

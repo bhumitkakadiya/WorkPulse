@@ -49,6 +49,7 @@ export default function AdminDashboard() {
         setAlerts((aRes.data.alerts || []).slice(0, 5));
         
         const days = chartRange === '7D' ? 7 : chartRange === '14D' ? 14 : 30;
+        const today = new Date();
         const data = Array.from({ length: days }, (_, i) => {
           const d = new Date(today);
           d.setDate(d.getDate() - ((days - 1) - i));
@@ -205,7 +206,7 @@ export default function AdminDashboard() {
             else if (dept.score >= 50) barColor = '#F59E0B';
 
             return (
-              <div key={idx} className="admin-dept-card">
+              <div key={dept.name} className="admin-dept-card">
                 <div className="admin-dept-header">
                   <div>
                     <div className="admin-dept-title">{dept.name}</div>
